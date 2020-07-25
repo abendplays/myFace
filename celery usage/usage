@@ -1,0 +1,3 @@
+1st terminal: ./run-redis.sh
+2nd terminal: celery worker -A app.celery --loglevel=info
+3rd terminal: flask run --host 0.0.0.0

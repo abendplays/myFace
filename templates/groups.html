@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <title>My Groups</title>
+</head>
+<body>
+<nav class="nav nav-pills flex-column flex-sm-row">
+  <a class="flex-sm-fill text-sm-center nav-link" href="/">My ...</a>
+  <a class="flex-sm-fill text-sm-center nav-link active" href="/groups">My groups</a>
+  <a class="flex-sm-fill text-sm-center nav-link" href="#">My Inbox</a>
+  <a class="flex-sm-fill text-sm-center nav-link" href="logout">Logout</a>
+
+<!--  <a class="flex-sm-fill text-sm-center nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>-->
+</nav>
+    <h2>What's going on in your groups?</h2>
+    bla bla bla <br>
+    bla lba bla
+    <h2>Or create a new Group</h2>
+<form action="/groups" method="post" >
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="groupName" placeholder="Groupname" type="text">
+        </div>
+        <div class="form-group">
+            <input class="form-control" name="userNames" placeholder="Who do you want to invite to the group?" type="text">
+            Please separate the Usernames using the ',' character.
+        </div>
+        <button class="btn btn-primary" type="submit">Create Group</button>
+    </form>
+</body>
+</html>

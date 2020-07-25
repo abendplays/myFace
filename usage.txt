@@ -1,0 +1,2 @@
+./run-redis.sh
+celery worker -A application.celery --loglevel=info
