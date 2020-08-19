@@ -30,7 +30,8 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config['SECRET_KEY'] = 'top-secret!'
 app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
 app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-app.config['UPLOAD_FOLDER'] = '/home/deeplearning/Desktop/facialrec/profile'
+app.config['UPLOAD_FOLDER'] = '/home/deeplearning/Desktop/facialrec/static/profile'
+app.config['UPLOAD_FOLDER_IMG'] = '/home/deeplearning/Desktop/facialrec/images'
 
 # Initialize Celery
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
@@ -44,8 +45,8 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-groupDB = sqlite3.connect("facialrec.db")
-group = groupDB.cursor()
+#groupDB = sqlite3.connect("facialrec.db")
+#group = groupDB.cursor()
 # initializing Databasconnector
 
 
@@ -63,41 +64,159 @@ inTolerance = 0.6
 # arrays für alle mit den unknown images verwandten Teilen werden aufgesetzt
 
 
-@app.route('/profile')
+@app.route('/profile', methods = ['GET', 'POST']) # TODO check for exsisting profile picture and delete if applicable
 @login_required
-def upload_file():
-   return render_template('profile.html')
+def profile():
+    if request.method == 'GET':
+        groupDB = sqlite3.connect("facialrec.db")
+        group = groupDB.cursor()
+        group.execute("SELECT imageID FROM profiles WHERE userID = :userID", {'userID': session["user_id"]})
+        imageID = group.fetchall()
+        group.execute("SELECT userName FROM users WHERE userID = :userID", {'userID': session["user_id"]})
+        userName = group.fetchall()
+        userName = userName[0][0]
+        if imageID == []:
+            profilePic = 'noPBset.jpg'
+        else:
+            group.execute("SELECT ending FROM profiles WHERE userID = :userID", {'userID': session["user_id"]})
+            ending = group.fetchall()
+            profilePic = str(imageID[0][0]) + (ending[0][0])
+        return render_template('profile.html',  userName=userName, profilePic=profilePic) #profilePic=profilePic,
+    else:
+        print("start")
+        file = request.files['file']
+        print("start")
+        filename = secure_filename(file.filename)
+        groupDB = sqlite3.connect("facialrec.db")
+        extension = os.path.splitext(filename)[1]
+        group = groupDB.cursor()
+        group.execute("SELECT COUNT(*) FROM profiles")
+        lastID = group.fetchall()
+        print("last id: ", lastID[0][0])
+        newID = str(lastID[0][0] + 1)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename)) #, filename))
+        os.rename(app.config['UPLOAD_FOLDER'] + '/' + filename, app.config['UPLOAD_FOLDER'] + '/' + newID + extension)
+        group.execute("UPDATE users SET profilePic = :profilePic WHERE userID = :userID", {'profilePic': newID, 'userID': session["user_id"]})
+        groupDB.commit()
+        intID = str(newID)
+        group.execute("INSERT INTO profiles (imageID, userID, ending) VALUES (:imageID, :userID, :ending)", {'imageID': intID, 'userID': session["user_id"], 'ending': extension})
+        groupDB.commit()
+        print("Name of the new profile Picture:", newID)
+        profilePic = str(newID[0][0]) + extension
+        group.execute("SELECT userName FROM users WHERE userID = :userID", {'userID': session["user_id"]})
+        userName = group.fetchall()
+        return render_template('profile.html',  userName=userName, profilePic=profilePic)
 
 
 @app.route('/groups', methods = ['GET', 'POST'])
 @login_required
 def groups():
     if request.method == 'GET':
+        # db = sqlite3.connect("facialrec.db")
+        # group = db.cursor()
+        # group.execute("SELECT ")
         return render_template('groups.html')
     else:
-        print("false")
+        groupName = request.form.get("groupName")
+        userNames = request.form.get("userNames")
+        db = sqlite3.connect("facialrec.db")
+        group = db.cursor()
+        # error checking the groupName:
+        if groupName == (''):
+            return("Please enter a Groupname!")
+        if userNames == (''):
+            return("Please enter at least one other Username!")
+        users = userNames.split(",")
+        runner = 0
+        for user in users:
+            group.execute("SELECT * FROM users WHERE userName = :userName", {'userName': users[runner]})
+            checkName = group.fetchall()
+            print("Checkname:", checkName)
+            print("first try:", users[runner])
+            if checkName == []: # erster versuch war nicht erfolgreich: nutzer nicht gefunden
+                checker = users[runner].translate({ord(' '): None}) # zweiter versuch entfernt leerzeichen davor.
+                group.execute("SELECT * FROM users WHERE userName = :userName", {'userName': checker})
+                checkName = group.fetchall()
+                print("checkname2:", checker)
+                if checkName == []: # auch zweiter versuch war nicht erfolgreich.
+                    return("dat is kein name du depp, egal wie man es dreht und wendet: dat funzt nicht. Der Nutzername existiert nicht: " + users[runner])
+                else:
+                    users[runner] = checker
+                    print("second try:", users[runner])
+            runner += 1
+        # es ist sichergestellt, dass alle nutzer existieren!
+        group.execute("INSERT INTO groups (groupName) VALUES (:groupName)", {'groupName': groupName}) # grupper wird erstellt
+        db.commit() # gruppe wird erstellt.
+        groupID = int(group.lastrowid)  # groupID gepseichert
+        group.execute("UPDATE users SET groupCount = groupCount + 1 WHERE userID = :userID", {'userID': session["user_id"]})
+        db.commit() # nutzers group count wird inkrementiert aber nur für den erstelleter # TODO auch für die anderen machen
+        group.execute("SELECT userName FROM users WHERE userID = :userID", {'userID': session["user_id"]})
+        groupCreator = group.fetchall()
+        group.execute("INSERT INTO invites (groupID, groupName, userID, userName, status, createdBy) VALUES (:groupID, :groupName, :userID, :userName, 0, :createdBy)", {'groupID': groupID, 'groupName': groupName, 'userID': session["user_id"], 'userName': groupCreator[0][0], 'createdBy': groupCreator[0][0]})
+        db.commit() # der ersteller der gruppe wird in die invites als bestätigt eingefügt.
+        print("Die groupID lautet:", groupID)
+        runner = 0
+        for user in users:
+            group.execute("SELECT userID FROM users WHERE userName = :userName", {'userName': users[runner]})
+            userID = group.fetchall() # holt sich die userID als unique identifier.
+            print("userID:", userID[0][0])
+            group.execute("INSERT INTO invites (groupID, groupName, userID, userName, createdBy) VALUES (:groupID, :groupName, :userID, :userName, :createdBy)", {'groupID': groupID, 'groupName': groupName, 'userID': userID[0][0], 'userName': users[runner], 'createdBy': groupCreator[0][0]})
+            db.commit()
+            runner += 1
+        out = ("The group " + groupName + " has been succesfully created!")
+        return(out)
 
+
+@app.route('/inbox', methods = ['GET', 'POST'])
+@login_required
+def inbox():
+    if request.method == "GET":
+        db = sqlite3.connect("facialrec.db")
+        inbox = db.cursor()
+        inbox.execute("SELECT groupName, createdBy FROM invites WHERE userID = :userID AND status = 1", {'userID': session["user_id"]})
+        groupNames = inbox.fetchall()
+        print("", groupNames)
+        return render_template('inbox.html', groupNames=groupNames)
 
 @app.route('/uploader', methods = ['GET', 'POST'])
 @login_required
-def upload_files():
-   if request.method == 'POST':
-      f = request.files['file']
-      filename = secure_filename(f.filename)
+def uploader():
+    return("gut so")
+   # if request.method == 'POST':
+   #     file = request.files.getlist("file")
+   #     filename = secure_filename(file.filename)
+   #     groupDB = sqlite3.connect("facialrec.db")
+   #     group = groupDB.cursor()
+   #     group.execute("SELECT COUNT(*) FROM profiles")
+   #     lastID = group.fetchall()
+   #     newID = lastID + 1
+   #     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), newID)
+   #     group.execute("UPDATE users SET profilePic = :profilePic WHERE userID = :userID", {'profilePic': newID, 'userID': session["user_id"]})
+   #     print("Name of the new profile Picture:", newID)
+   #     return 'files uploaded successfully'
 
-      groupDB = sqlite3.connect("facialrec.db")
-      group = groupDB.cursor()
-      group.execute("SELECT * FROM users WHERE profilePic = :profilePic",
-                    {'profilePic': filename})
-      checkImage = group.fetchall()
-      print(":", checkImage)
-      if checkImage != []:
-          return ('please rename this image') # todo: automatic rename
-      group.execute("INSERT INTO users (profilePic) VALUES (:profilePic) WHERE userID = :userID", {'profilePic': filename, 'userID': session["user_id"]})
-      groupDB.commit()  #fixen bugfix needed
-      f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-      print("f.filename: ", f.filename)
-      return 'file uploaded successfully'
+   # if request.method == 'POST':
+   #     upload = request.files.getlist("file")
+   #     for file in upload:
+   #         print(upload)
+   #         filename = secure_filename(file.filename)
+   #         groupDB = sqlite3.connect("facialrec.db")
+   #         group = groupDB.cursor()
+   #         group.execute("SELECT * FROM users WHERE profilePic = :profilePic",
+   #                   {'profilePic': filename})
+   #         checkImage = group.fetchall()
+   #         print("found image:", checkImage)
+   #         if checkImage == []:
+   #             group.execute("UPDATE users SET profilePic = :profilePic WHERE userID = :userID", {'profilePic': filename, 'userID': session["user_id"]})
+   #             groupDB.commit()  #fixen bugfix needed
+   #             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+   #             print("file.filename: ", file.filename)
+   #         else:
+   #             print("please rename this image")
+   #     return 'files uploaded successfully'
+   # else:
+   #     return render_template("profile.html")
+
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -186,7 +305,7 @@ def index():
             progress += 1
         #algorithm()
         progress = progress
-        print("progress", progress)
+        print("progresss", progress)
         return render_template("index.html", progress=progress)
 
 #unknown_image ist die Image Datei, in die Geladen wird.
@@ -273,14 +392,3 @@ def logout():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-
-
-
-
-
-

@@ -1,9 +1,27 @@
 <html>
+<head>
+   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+</head>
    <body>
-      <form action = "/uploader" method = "POST"
-         enctype = "multipart/form-data">
-         <input type = "file" name = "file" />
-         <input type = "submit"/>
+   <nav class="nav nav-pills flex-column flex-sm-row">
+  <a class="flex-sm-fill text-sm-center nav-link" href="/">My ...</a>
+  <a class="flex-sm-fill text-sm-center nav-link" href="/groups">My groups</a>
+  <a class="flex-sm-fill text-sm-center nav-link" href="inbox">My Inbox</a>
+  <a class="flex-sm-fill text-sm-center nav-link active" href="profile">My Profile</a>
+  <a class="flex-sm-fill text-sm-center nav-link" href="logout">Logout</a>
+   </nav>
+
+   Hello, {{ userName }}!
+   <img src="/static/profile/{{profilePic}}" alt={{ userName}} style="width: 30%">
+   <form action = "/profile" method="post" enctype="multipart/form-data">
+         <input type = "file" name = "file"/>
+         <input type = "submit" value="add"/>
       </form>
+   Only for testing purposes:
+      <form action = "/uploader" method = "POST" enctype="multipart/form-data">
+         <input type = "file" name = "file" multiple=""/>
+         <input type = "submit" value="add"/>
+      </form>
+
    </body>
 </html>
