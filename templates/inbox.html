@@ -13,7 +13,8 @@
    <p id="test"></p>
     {% for groupName in groupNames %}
 
-    You are invited to the group "{{ groupNames[0][0]}}", created by "{{ groupNames[0][1]}}"
+    You are invited to the group "{{ groupName[0]}}", created by "{{ groupName[1]}}"
+   <br>
 
     {% endfor %}
    </body>
