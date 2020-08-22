@@ -112,10 +112,32 @@ def profile():
 @login_required
 def groups():
     if request.method == 'GET':
-        # db = sqlite3.connect("facialrec.db")
-        # group = db.cursor()
-        # group.execute("SELECT ")
-        return render_template('groups.html')
+        db = sqlite3.connect("facialrec.db")
+        inbox = db.cursor()
+        inbox.execute("SELECT groupName, createdBy, groupID FROM invites WHERE userID = :userID AND status = 0",
+                      {'userID': session["user_id"]})
+        groupNames = inbox.fetchall()
+        runner = 0
+        test = []
+        for groupName in groupNames:
+            inbox.execute("SELECT userName FROM invites WHERE groupID = :groupID AND status = 0",
+                          {'groupID': groupNames[runner][2]})
+            users = inbox.fetchall()
+            # print("", users)
+            # print("grouping:", groupNames[runner][2])
+            laeufer = 0
+            participants = ""
+            for users in users:
+                if laeufer == 0:
+                    participants = participants + users[0]
+                    laeufer += 1
+                else:
+                    participants = participants + ", " + users[0]
+                    laeufer += 1
+            test.append(participants)
+            # test.append(participants)
+            runner += 1
+        return render_template('groups.html', groupNames=zip(groupNames, test))
     else:
         groupName = request.form.get("groupName")
         userNames = request.form.get("userNames")

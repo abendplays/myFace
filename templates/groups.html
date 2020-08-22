@@ -15,9 +15,14 @@
 
 <!--  <a class="flex-sm-fill text-sm-center nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>-->
 </nav>
-    <h2>What's going on in your groups?</h2>
-    bla bla bla <br>
-    bla lba bla
+    <h2>See what's going on in your groups?</h2>
+        {% for groupName in groupNames %}
+
+    You are a participant of the group "{{ groupName[0][0]}}". {{ groupName[1] }} are also participants of the group.
+
+<br><hr>
+
+    {% endfor %}
     <h2>Or create a new Group</h2>
 <form action="/groups" method="post" >
         <div class="form-group">
