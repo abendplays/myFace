@@ -218,6 +218,7 @@ def inbox():
             inbox.execute("UPDATE invites SET status = 2 WHERE userID = :userID AND groupID = :groupID",
                           {'userID': session["user_id"], 'groupID': groupID})
             db.commit()
+            print("success")
         return redirect("inbox")
 
 
