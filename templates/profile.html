@@ -1,6 +1,28 @@
 <html>
 <head>
    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+<style>
+img {
+  margin-top: 2%;
+  width:300px;
+  height:300px;
+  object-fit:cover;
+  border-radius: 50%;
+  margin-right: 20%;
+  float: right;
+}
+
+.text{
+  margin-top: 1%;
+  margin-left: 2%;
+  float: left;
+  line-height: 1.6;
+}
+
+.testing {
+  margin-top: 39%;
+}
+</style>
 </head>
    <body>
    <nav class="nav nav-pills flex-column flex-sm-row">
@@ -10,18 +32,25 @@
   <a class="flex-sm-fill text-sm-center nav-link active" href="profile">My Profile</a>
   <a class="flex-sm-fill text-sm-center nav-link" href="logout">Logout</a>
    </nav>
+<div class="text">
+   <h3>Hey, {{ userName }}! How are you doing?</h3>
+    Transparency is important to us! That's why we want you to know, which statistics we store about you: <br>
+    You are an active participant in ... groups.<br>
+    So far you have received ... invitations. <br>
 
-   Hello, {{ userName }}!
-   <img src="/static/profile/{{profilePic}}" alt={{ userName}} style="width: 30%">
-   <form action = "/profile" method="post" enctype="multipart/form-data">
+    <form action = "/profile" method="post" enctype="multipart/form-data">
          <input type = "file" name = "file"/>
          <input type = "submit" value="add"/>
       </form>
+</div>
+   <img src="/static/profile/{{profilePic}}" alt={{ userName}}>
+
+<div class="testing">
    Only for testing purposes:
       <form action = "/uploader" method = "POST" enctype="multipart/form-data">
          <input type = "file" name = "file" multiple=""/>
          <input type = "submit" value="add"/>
       </form>
-
+</div>
    </body>
 </html>
