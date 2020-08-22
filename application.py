@@ -70,7 +70,7 @@ def profile():
     if request.method == 'GET':
         groupDB = sqlite3.connect("facialrec.db")
         group = groupDB.cursor()
-        group.execute("SELECT imageID FROM profiles WHERE userID = :userID", {'userID': session["user_id"]})
+        group.execute("SELECT profilePic FROM users WHERE userID = :userID", {'userID': session["user_id"]})
         imageID = group.fetchall()
         group.execute("SELECT userName FROM users WHERE userID = :userID", {'userID': session["user_id"]})
         userName = group.fetchall()
@@ -105,7 +105,7 @@ def profile():
         profilePic = str(newID[0][0]) + extension
         group.execute("SELECT userName FROM users WHERE userID = :userID", {'userID': session["user_id"]})
         userName = group.fetchall()
-        return render_template('profile.html',  userName=userName, profilePic=profilePic)
+        return redirect("profile")
 
 
 @app.route('/groups', methods = ['GET', 'POST'])
