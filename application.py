@@ -75,7 +75,8 @@ def profile():
         group.execute("SELECT userName FROM users WHERE userID = :userID", {'userID': session["user_id"]})
         userName = group.fetchall()
         userName = userName[0][0]
-        if imageID == []:
+        print("imageID:", imageID[0][0])
+        if imageID[0][0] == None:
             profilePic = 'noPBset.jpg'
         else:
             group.execute("SELECT ending FROM profiles WHERE userID = :userID", {'userID': session["user_id"]})
