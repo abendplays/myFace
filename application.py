@@ -173,10 +173,35 @@ def inbox():
     if request.method == "GET":
         db = sqlite3.connect("facialrec.db")
         inbox = db.cursor()
-        inbox.execute("SELECT groupName, createdBy FROM invites WHERE userID = :userID AND status = 1", {'userID': session["user_id"]})
+        inbox.execute("SELECT groupName, createdBy, groupID FROM invites WHERE userID = :userID AND status = 1", {'userID': session["user_id"]})
         groupNames = inbox.fetchall()
-        print("", groupNames)
-        return render_template('inbox.html', groupNames=groupNames)
+        runner = 0
+        test = []
+        for groupName in groupNames:
+            inbox.execute("SELECT userName FROM invites WHERE groupID = :groupID AND status = 0",
+                          {'groupID': groupNames[runner][2]})
+            users = inbox.fetchall()
+            print("", users)
+            print("grouping:", groupNames[runner][2])
+
+            #participants = ','.join(users)
+            #print("users[0:", users)
+            laeufer = 0
+            participants = ""
+            for users in users:
+                if laeufer == 0:
+                    participants = participants + users[0]
+                    laeufer += 1
+                else:
+                    participants = participants + ", " + users[0]
+                    laeufer += 1
+            test.append(participants)
+            #test.append(participants)
+            runner += 1
+        return render_template('inbox.html', groupNames=zip(groupNames, test))
+    else:
+        return("aha")
+
 
 @app.route('/uploader', methods = ['GET', 'POST'])
 @login_required

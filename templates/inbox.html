@@ -13,8 +13,9 @@
    <p id="test"></p>
     {% for groupName in groupNames %}
 
-    You are invited to the group "{{ groupName[0]}}", created by "{{ groupName[1]}}"
-   <br>
+    You are invited to the group "{{ groupName[0][0]}}", created by "{{ groupName[0][1]}}". Known users include: "{{ groupName[1] }}".
+
+   <br><hr>
 
     {% endfor %}
    </body>
