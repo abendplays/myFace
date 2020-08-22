@@ -14,9 +14,16 @@
     {% for groupName in groupNames %}
 
     You are invited to the group "{{ groupName[0][0]}}", created by "{{ groupName[0][1]}}". Known users include: "{{ groupName[1] }}".
-
+    <form action="/inbox" method="post" >
+         <button type="submit" name="groupID" value={{ groupName[0][2] }}a>Join this group.</button>
+         <button type="submit" name="groupID" value={{ groupName[0][2] }}d>Decline the invitation.</button>
+    </form>
    <br><hr>
 
     {% endfor %}
+
+
+
+
    </body>
 </html>

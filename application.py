@@ -181,11 +181,8 @@ def inbox():
             inbox.execute("SELECT userName FROM invites WHERE groupID = :groupID AND status = 0",
                           {'groupID': groupNames[runner][2]})
             users = inbox.fetchall()
-            print("", users)
-            print("grouping:", groupNames[runner][2])
-
-            #participants = ','.join(users)
-            #print("users[0:", users)
+            #print("", users)
+            #print("grouping:", groupNames[runner][2])
             laeufer = 0
             participants = ""
             for users in users:
@@ -199,8 +196,29 @@ def inbox():
             #test.append(participants)
             runner += 1
         return render_template('inbox.html', groupNames=zip(groupNames, test))
-    else:
-        return("aha")
+    elif request.method == "POST":
+        returnvalue = request.form.get("groupID")
+        length = len(returnvalue)
+        length -=1
+        groupID = returnvalue
+        db = sqlite3.connect("facialrec.db")
+        inbox = db.cursor()
+        print("groupID", returnvalue)
+        if returnvalue[length] == 'a':
+            print("accepted")
+            groupID = groupID.replace("a", "")
+            print("userID", groupID)
+            inbox.execute("UPDATE invites SET status = 0 WHERE userID = :userID AND groupID = :groupID",
+                          {'userID': session["user_id"], 'groupID': groupID})
+            db.commit()
+        elif returnvalue[length] == 'd':
+            print("declined")
+            groupID = groupID.replace("d", "")
+            print("userID", groupID)
+            inbox.execute("UPDATE invites SET status = 2 WHERE userID = :userID AND groupID = :groupID",
+                          {'userID': session["user_id"], 'groupID': groupID})
+            db.commit()
+        return redirect("inbox")
 
 
 @app.route('/uploader', methods = ['GET', 'POST'])
