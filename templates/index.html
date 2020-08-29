@@ -19,6 +19,15 @@
   <a class="flex-sm-fill text-sm-center nav-link" href="logout">Logout</a>
 
 </nav>
+{% for group in groups %}
+    {{ group[1] }}
+
+    <hr>
+
+{% endfor %}
+
+
+
 
     <button id="start-bg-job">Start Long Calculation</button>
     <div id="progresss"></div>

@@ -362,8 +362,13 @@ def login():
 @login_required
 def index():
     if request.method == 'GET':
+        groupDB = sqlite3.connect("facialrec.db")
+        group = groupDB.cursor()
+        group.execute("SELECT groupID, groupName FROM invites WHERE userID=:userID AND status=0", {'userID': session['user_id']})
+        groups = group.fetchall()
+        print("groups:", groups)
         progress = 0
-        return render_template("index.html", progress=progress)
+        return render_template("index.html", progress=progress, groups=groups)
     else:
         print("length:", len(imagesDB))
         progress = 0
