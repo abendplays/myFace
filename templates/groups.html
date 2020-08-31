@@ -4,9 +4,91 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <title>My Groups</title>
     <style>
+    .form-add{
+    width: 60%;
+    }
+
+
+    .beam{
+  background-color: #007bff;
+  height: 100px;
+}
+
+
         .theGroup {
             width: 50%;
         }
+        /* Dropdown Button */
+.dropbtn {
+  background-color: #3498DB;
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Dropdown button on hover & focus */
+.dropbtn:hover, .dropbtn:focus {
+  background-color: #2980B9;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {background-color: #ddd}
+
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block;}
+
+
+
+.left{
+  float: left;
+  width: 60%;
+  height: 100%;
+  line-height: 1.6;
+  margin-top: 2%;
+  margin-left: 1.5%;
+}
+
+.right{
+  float: right;
+  width: 35%;
+  height: 100%;
+  margin-right: 1%;
+  margin-top: 2%;
+
+}
+
+
+.heading {
+  color: white;
+  margin-left: 2%;
+  padding-top: 31px;
+}
     </style>
 </head>
 <body>
@@ -20,32 +102,88 @@
 
 <!--  <a class="flex-sm-fill text-sm-center nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>-->
 </nav>
-    <h2>See what's going on in your groups.</h2>        {% for groupName in groupNames %}
+    <div class="beam">
+       <div class="heading">
+            <h2>Check in with your groups</h2>
+       </div>
+   </div>
+
+
+<div class="left">
+    <h2>Your groups</h2>
+{% for groupName in groupNames %}
 <div class="theGroup">
-    You are a participant of the group "{{ groupName[0][0]}}". {{ groupName[1] }} are also participants of the group.
+    <h4>{{ groupName[0][0]}}</h4>
+    Participants: {{ groupName[1] }}.
 </div>
 <form action="/groups" method="post" >
-        <div class="form-group">
-            <input class="form-control" name="userNames" placeholder="Who do you want to add to the group?" type="text">
-            Please separate the Usernames using the ',' character.
+        <div class="form-add">
+            <div class="form-group">
+            <input class="form-control" name="userNames" placeholder="Who do you want to add to the group? Please separate using ','" type="text">
+
         </div>
+            </div>
         <button class="btn btn-primary" type="submit">Create Group</button>
-    #todo: add to the group needs unique identifier
 </form>
+
+<div class="dropdown">
+  <button onclick="myFunction()" class="dropbtn">Dropdown</button>
+  <div id="myDropdown" class="dropdown-content">
+    <button class="btn btn-primary" type="submit">Create Group</button>
+          <form action = "/groups" method = "POST" enctype="multipart/form-data">
+         <input type = "file" name = "file" multiple=""/>
+              <input name="newImages" type = "submit" value=gallery{{ groupName[0][2] }}a> test
+      </form>
+    <a href="index.html">Link 3</a>
+  </div>
+</div>
 
 <hr>
 
     {% endfor %}
-    <h2>Or create a new Group</h2>
+    </div>
+
+
+
+
+
+
+
+
+
+
+<div class="right">
+    <h2>Create a new Group</h2>
 <form action="/groups" method="post" >
         <div class="form-group">
             <input autocomplete="off" autofocus class="form-control" name="groupName" placeholder="Groupname" type="text">
         </div>
         <div class="form-group">
-            <input class="form-control" name="userNames" placeholder="Who do you want to invite to the group?" type="text">
-            Please separate the Usernames using the ',' character.
+            <input class="form-control" name="userNames" placeholder="Who do you want to add to the group? Please separate using ','" type="text">
         </div>
         <button class="btn btn-primary" type="submit">Create Group</button>
 </form>
+</div>
+<script>
+    /* When the user clicks on the button,
+toggle between hiding and showing the dropdown content */
+function myFunction() {
+  document.getElementById("myDropdown").classList.toggle("show");
+}
+
+// Close the dropdown menu if the user clicks outside of it
+window.onclick = function(event) {
+  if (!event.target.matches('.dropbtn')) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+}
+</script>
 </body>
 </html>

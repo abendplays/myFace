@@ -31,7 +31,7 @@ app.config['SECRET_KEY'] = 'top-secret!'
 app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
 app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 app.config['UPLOAD_FOLDER'] = '/home/deeplearning/Desktop/facialrec/static/profile'
-app.config['UPLOAD_FOLDER_IMG'] = '/home/deeplearning/Desktop/facialrec/images'
+app.config['UPLOAD_FOLDER_IMG'] = '/home/deeplearning/Desktop/facialrec/static/gallery'
 
 # Initialize Celery
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
@@ -82,7 +82,11 @@ def profile():
             group.execute("SELECT ending FROM profiles WHERE userID = :userID", {'userID': session["user_id"]})
             ending = group.fetchall()
             profilePic = str(imageID[0][0]) + (ending[0][0])
-        return render_template('profile.html',  userName=userName, profilePic=profilePic) #profilePic=profilePic,
+        group.execute("SELECT COUNT (*) FROM invites WHERE userID = :userID AND status=0", {'userID': session["user_id"]})
+        active = group.fetchall()
+        group.execute("SELECT COUNT (*) FROM invites WHERE userID = :userID AND status=1", {'userID': session["user_id"]})
+        pending = group.fetchall()
+        return render_template('profile.html',  userName=userName, profilePic=profilePic, active=active, pending=pending) #profilePic=profilePic,
     else:
         print("start")
         file = request.files['file']
@@ -138,57 +142,63 @@ def groups():
             test.append(participants)
             # test.append(participants)
             runner += 1
+            print("groupNames:", groupNames)
         return render_template('groups.html', groupNames=zip(groupNames, test))
     else:
         groupName = request.form.get("groupName")
         userNames = request.form.get("userNames")
-        db = sqlite3.connect("facialrec.db")
-        group = db.cursor()
-        # error checking the groupName:
-        if groupName == (''):
-            return("Please enter a Groupname!")
-        if userNames == (''):
-            return("Please enter at least one other Username!")
-        users = userNames.split(",")
-        runner = 0
-        for user in users:
-            group.execute("SELECT * FROM users WHERE userName = :userName", {'userName': users[runner]})
-            checkName = group.fetchall()
-            print("Checkname:", checkName)
-            print("first try:", users[runner])
-            if checkName == []: # erster versuch war nicht erfolgreich: nutzer nicht gefunden
-                checker = users[runner].translate({ord(' '): None}) # zweiter versuch entfernt leerzeichen davor.
-                group.execute("SELECT * FROM users WHERE userName = :userName", {'userName': checker})
+        # imageToAdd = request.form['newImages']
+        # print("imageToAdd:", imageToAdd)
+        imageToAdd = ""
+        if not imageToAdd:
+            db = sqlite3.connect("facialrec.db")
+            group = db.cursor()
+            # error checking the groupName:
+            if groupName == (''):
+                return("Please enter a Groupname!")
+            if userNames == (''):
+                return("Please enter at least one other Username!")
+            users = userNames.split(",")
+            runner = 0
+            for user in users:
+                group.execute("SELECT * FROM users WHERE userName = :userName", {'userName': users[runner]})
                 checkName = group.fetchall()
-                print("checkname2:", checker)
-                if checkName == []: # auch zweiter versuch war nicht erfolgreich.
-                    return("dat is kein name du depp, egal wie man es dreht und wendet: dat funzt nicht. Der Nutzername existiert nicht: " + users[runner])
-                else:
-                    users[runner] = checker
-                    print("second try:", users[runner])
-            runner += 1
-        # es ist sichergestellt, dass alle nutzer existieren!
-        group.execute("INSERT INTO groups (groupName) VALUES (:groupName)", {'groupName': groupName}) # grupper wird erstellt
-        db.commit() # gruppe wird erstellt.
-        groupID = int(group.lastrowid)  # groupID gepseichert
-        group.execute("UPDATE users SET groupCount = groupCount + 1 WHERE userID = :userID", {'userID': session["user_id"]})
-        db.commit() # nutzers group count wird inkrementiert aber nur für den erstelleter # TODO auch für die anderen machen
-        group.execute("SELECT userName FROM users WHERE userID = :userID", {'userID': session["user_id"]})
-        groupCreator = group.fetchall()
-        group.execute("INSERT INTO invites (groupID, groupName, userID, userName, status, createdBy) VALUES (:groupID, :groupName, :userID, :userName, 0, :createdBy)", {'groupID': groupID, 'groupName': groupName, 'userID': session["user_id"], 'userName': groupCreator[0][0], 'createdBy': groupCreator[0][0]})
-        db.commit() # der ersteller der gruppe wird in die invites als bestätigt eingefügt.
-        print("Die groupID lautet:", groupID)
-        runner = 0
-        for user in users:
-            group.execute("SELECT userID FROM users WHERE userName = :userName", {'userName': users[runner]})
-            userID = group.fetchall() # holt sich die userID als unique identifier.
-            print("userID:", userID[0][0])
-            group.execute("INSERT INTO invites (groupID, groupName, userID, userName, createdBy) VALUES (:groupID, :groupName, :userID, :userName, :createdBy)", {'groupID': groupID, 'groupName': groupName, 'userID': userID[0][0], 'userName': users[runner], 'createdBy': groupCreator[0][0]})
-            db.commit()
-            runner += 1
-        out = ("The group " + groupName + " has been succesfully created!")
-        return(out)
-
+                print("Checkname:", checkName)
+                print("first try:", users[runner])
+                if checkName == []: # erster versuch war nicht erfolgreich: nutzer nicht gefunden
+                    checker = users[runner].translate({ord(' '): None}) # zweiter versuch entfernt leerzeichen davor.
+                    group.execute("SELECT * FROM users WHERE userName = :userName", {'userName': checker})
+                    checkName = group.fetchall()
+                    print("checkname2:", checker)
+                    if checkName == []: # auch zweiter versuch war nicht erfolgreich.
+                        return("dat is kein name du depp, egal wie man es dreht und wendet: dat funzt nicht. Der Nutzername existiert nicht: " + users[runner])
+                    else:
+                        users[runner] = checker
+                        print("second try:", users[runner])
+                runner += 1
+            # es ist sichergestellt, dass alle nutzer existieren!
+            group.execute("INSERT INTO groups (groupName) VALUES (:groupName)", {'groupName': groupName}) # grupper wird erstellt
+            db.commit() # gruppe wird erstellt.
+            groupID = int(group.lastrowid)  # groupID gepseichert
+            group.execute("UPDATE users SET groupCount = groupCount + 1 WHERE userID = :userID", {'userID': session["user_id"]})
+            db.commit() # nutzers group count wird inkrementiert aber nur für den erstelleter # TODO auch für die anderen machen
+            group.execute("SELECT userName FROM users WHERE userID = :userID", {'userID': session["user_id"]})
+            groupCreator = group.fetchall()
+            group.execute("INSERT INTO invites (groupID, groupName, userID, userName, status, createdBy) VALUES (:groupID, :groupName, :userID, :userName, 0, :createdBy)", {'groupID': groupID, 'groupName': groupName, 'userID': session["user_id"], 'userName': groupCreator[0][0], 'createdBy': groupCreator[0][0]})
+            db.commit() # der ersteller der gruppe wird in die invites als bestätigt eingefügt.
+            print("Die groupID lautet:", groupID)
+            runner = 0
+            for user in users:
+                group.execute("SELECT userID FROM users WHERE userName = :userName", {'userName': users[runner]})
+                userID = group.fetchall() # holt sich die userID als unique identifier.
+                print("userID:", userID[0][0])
+                group.execute("INSERT INTO invites (groupID, groupName, userID, userName, createdBy) VALUES (:groupID, :groupName, :userID, :userName, :createdBy)", {'groupID': groupID, 'groupName': groupName, 'userID': userID[0][0], 'userName': users[runner], 'createdBy': groupCreator[0][0]})
+                db.commit()
+                runner += 1
+            out = ("The group " + groupName + " has been succesfully created!")
+            return(out)
+        else:
+            print("imageToAdd:", imageToAdd)
 
 @app.route('/inbox', methods = ['GET', 'POST'])
 @login_required

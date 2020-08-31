@@ -12,15 +12,33 @@ img {
   float: right;
 }
 
+.beam{
+  background-color: 007bff;
+  height: 160px;
+}
+
 .text{
   margin-top: 1%;
   margin-left: 2%;
   float: left;
   line-height: 1.6;
+  font-size:18px
 }
 
 .testing {
   margin-top: 39%;
+}
+
+.heading {
+  color: white;
+  margin-left: 13%;
+  padding-top: 63px;
+}
+
+.profilbild {
+  margin-top: 12%;
+  margin-right: -24%;
+  float: right;
 }
 </style>
 </head>
@@ -32,25 +50,31 @@ img {
   <a class="flex-sm-fill text-sm-center nav-link active" href="profile">My Profile</a>
   <a class="flex-sm-fill text-sm-center nav-link" href="logout">Logout</a>
    </nav>
+   <div class="beam">
+           <div class="img">
+             <img src="/static/profile/{{profilePic}}" alt={{ userName}}>
+           </div>
+       <div class="heading">
+            <h2>Hey, {{ userName }}! How are you doing?</h2>
+       </div>
+   </div>
 <div class="text">
-   <h3>Hey, {{ userName }}! How are you doing?</h3>
-    Transparency is important to us! That's why we want you to know, which statistics we store about you: <br>
-    You are an active participant in ... groups.<br>
-    So far you have received ... invitations. <br>
 
-    <form action = "/profile" method="post" enctype="multipart/form-data" style="margin-top: 3%;">
-         <input type = "file" name = "file"/>
-         <input type = "submit" value="add"/>
-      </form>
-</div>
-   <img src="/static/profile/{{profilePic}}" alt={{ userName}}>
+    Transparency is important to us! <br>
+    That's why we want you to know, which statistics we store about you: <br>
+    <br>
+    You are an active participant in {{active[0][0]}} groups.<br>
+    You have {{pending[0][0]}} pending invitations. <br>
 
-<div class="testing">
-   Only for testing purposes:
-      <form action = "/uploader" method = "POST" enctype="multipart/form-data">
-         <input type = "file" name = "file" multiple=""/>
-         <input type = "submit" value="add"/>
-      </form>
 </div>
+   <div class="profilbild">
+       <form action = "/profile" method="post" enctype="multipart/form-data" style="margin-top: 3%;">
+         <input class="btn btn-primary" type = "file" name = "file"/>
+         <input class="btn btn-link" type = "submit" value="add"/>
+       </form>
+   </div>
+
+
+
    </body>
 </html>

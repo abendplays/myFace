@@ -7,6 +7,10 @@
             width: 100%;
             text-align: center;
         }
+
+        .group {
+          margin-left: 1.5%;
+        }
     </style>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     </head>
@@ -20,7 +24,9 @@
 
 </nav>
 {% for group in groups %}
-    {{ group[1] }}
+    <div class="group">
+    <h4>{{ group[1] }}</h4>
+    </div>
 
     <hr>
 
