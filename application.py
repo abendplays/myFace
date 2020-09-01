@@ -142,15 +142,18 @@ def groups():
             test.append(participants)
             # test.append(participants)
             runner += 1
-            print("groupNames:", groupNames)
+            # print("groupNames:", groupNames)
         return render_template('groups.html', groupNames=zip(groupNames, test))
     else:
-        groupName = request.form.get("groupName")
-        userNames = request.form.get("userNames")
-        # imageToAdd = request.form['newImages']
-        # print("imageToAdd:", imageToAdd)
-        imageToAdd = ""
-        if not imageToAdd:
+        try:
+            submitOrig = request.form["userNames"]
+            print("submitOrig 1: ", submitOrig)
+        except:
+            submitOrig = None
+            print("It's not a new group")
+        if submitOrig is not None:
+            groupName = request.form.get("groupName")
+            userNames = request.form.get("userNames")
             db = sqlite3.connect("facialrec.db")
             group = db.cursor()
             # error checking the groupName:
@@ -197,8 +200,84 @@ def groups():
                 runner += 1
             out = ("The group " + groupName + " has been succesfully created!")
             return(out)
+
+
         else:
-            print("imageToAdd:", imageToAdd)
+            try:
+                submitOrig = request.form["groupID"]
+                print("submitOrig 1: ", submitOrig)
+            except:
+                print("Doesn't want to add to group")
+        if submitOrig is not None:
+            groupID = request.form.get("groupID")
+            print("groupID:", groupID)
+            userAdd = request.form.get("userAdd")
+            print("userAdd:", userAdd)
+            db = sqlite3.connect("facialrec.db")
+            group = db.cursor()
+            # error checking the groupName:
+            if userAdd == (''):
+                return ("Please enter at least one other Username!")
+            users = userAdd.split(",")
+            runner = 0
+            for user in users:
+                group.execute("SELECT * FROM users WHERE userName = :userName", {'userName': users[runner]})
+                checkName = group.fetchall()
+                print("Checkname:", checkName)
+                print("first try:", users[runner])
+                if checkName == []: # erster versuch war nicht erfolgreich: nutzer nicht gefunden
+                    checker = users[runner].translate({ord(' '): None}) # zweiter versuch entfernt leerzeichen davor.
+                    group.execute("SELECT * FROM users WHERE userName = :userName", {'userName': checker})
+                    checkName = group.fetchall()
+                    print("checkname2:", checker)
+                    if checkName == []: # auch zweiter versuch war nicht erfolgreich.
+                        return("dat is kein name du depp, egal wie man es dreht und wendet: dat funzt nicht. Der Nutzername existiert nicht: " + users[runner])
+                    else:
+                        users[runner] = checker
+                        print("second try:", users[runner])
+                runner += 1
+            # es ist sichergestellt, dass alle nutzer existieren!
+            runner = 0
+            for user in users:
+                group.execute("SELECT * FROM invites WHERE userName = :userName AND status = 0 AND groupID = :groupID", {'userName': users[runner], 'groupID': groupID})
+                checkGroup = group.fetchall()
+                print("CheckGroup:", checkGroup)
+                print("first try:", users[runner])
+                if checkGroup == []: # erster versuch war nicht erfolgreich: nutzer nicht gefunden
+                    checker = users[runner].translate({ord(' '): None}) # zweiter versuch entfernt leerzeichen davor.
+                    group.execute("SELECT * FROM invites WHERE userName = :userName AND status = 0 AND groupID = :groupID", {'userName': checker, 'groupID': groupID})
+                    checkGroup = group.fetchall()
+                    print("checkname2:", checker)
+                    if checkGroup == []: # auch zweiter versuch war nicht erfolgreich.
+                        users[runner] = checker
+                    else:
+                        return ("This user is already a participant in this group.")
+                else:
+                    return("This user is already a participant in this group.")
+                runner += 1
+            group.execute("SELECT createdBy FROM invites WHERE userID = :userID AND groupID = :groupID", {'userID': session["user_id"], 'groupID': groupID})
+            groupCreator = group.fetchall()
+            runner = 0
+            for user in users:
+                group.execute("SELECT userID FROM users WHERE userName = :userName", {'userName': users[runner]})
+                userID = group.fetchall() # holt sich die userID als unique identifier.
+                print("userID:", userID[0][0])
+                group.execute("SELECT groupName FROM invites WHERE userID = :userID AND groupID = :groupID", {'userID': session["user_id"], 'groupID': groupID})
+                groupName = group.fetchall()  # holt sich die userID als unique identifier.
+                group.execute("INSERT INTO invites (groupID, groupName, userID, userName, createdBy) VALUES (:groupID, :groupName, :userID, :userName, :createdBy)", {'groupID': groupID, 'groupName': groupName[0][0], 'userID': userID[0][0], 'userName': users[runner], 'createdBy': groupCreator[0][0]})
+                db.commit()
+                runner += 1
+            out = ("The user(s) have been succesfully added to the group.")
+            return(out)
+
+
+
+        # print("groupName, userNames, userAdd:", groupName, userNames, userAdd)
+
+        return("its a trap")
+
+#todo: groupcount inbox
+
 
 @app.route('/inbox', methods = ['GET', 'POST'])
 @login_required
@@ -243,6 +322,8 @@ def inbox():
             print("userID", groupID)
             inbox.execute("UPDATE invites SET status = 0 WHERE userID = :userID AND groupID = :groupID",
                           {'userID': session["user_id"], 'groupID': groupID})
+            db.commit()
+            inbox.execute("UPDATE users SET groupCount = groupCount + 1 WHERE userID = :userID", {'userID': session["user_id"]})
             db.commit()
         elif returnvalue[length] == 'd':
             print("declined")
