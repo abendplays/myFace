@@ -7,7 +7,9 @@ import os
 from celery import Celery
 from flask_session import Session
 import random
+from flask_dropzone import Dropzone
 from tempfile import mkdtemp
+from datetime import datetime
 import time
 from helpers import apology, login_required
 
@@ -18,6 +20,7 @@ userName = ""
 
 # Configure application
 app = Flask(__name__)
+dropzone = Dropzone(app)
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
@@ -32,6 +35,18 @@ app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
 app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 app.config['UPLOAD_FOLDER'] = '/home/deeplearning/Desktop/facialrec/static/profile'
 app.config['UPLOAD_FOLDER_IMG'] = '/home/deeplearning/Desktop/facialrec/static/gallery'
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+app.config.update(
+    UPLOADED_PATH=os.path.join(basedir, 'static/gallery'),
+    # Flask-Dropzone config:
+    DROPZONE_ALLOWED_FILE_TYPE='image',
+    DROPZONE_MAX_FILE_SIZE=3,
+    DROPZONE_MAX_FILES=30,
+)
+
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'img', 'jpeg'])
 
 # Initialize Celery
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
@@ -269,14 +284,83 @@ def groups():
                 runner += 1
             out = ("The user(s) have been succesfully added to the group.")
             return(out)
-
-
-
+        try:
+            files = request.files.getlist('file')
+        except:
+            files = ""
+        if files == "":
+            print("not uploading any new files.")
+        else:
+            db = sqlite3.connect("facialrec.db")
+            group = db.cursor()
+            files = request.files.getlist('file')
+            groupID = request.form.get("imageID")
+            print("groupID:", groupID)
+            for file in files:
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    extension = os.path.splitext(filename)[1]
+                    group.execute("SELECT COUNT(*) FROM images")
+                    lastID = group.fetchall()
+                    print("last id: ", lastID[0][0])
+                    newID = str(lastID[0][0] + 1)
+                    file.save(os.path.join(app.config['UPLOADED_PATH'], filename))  # , filename))
+                    os.rename(app.config['UPLOADED_PATH'] + '/' + filename,
+                              app.config['UPLOADED_PATH'] + '/' + newID + extension)
+                    intID = int(newID)
+                    now = datetime.now()
+                    date = now.strftime("%Y/%m/%d %H:%M:%S")
+                    print("date:", date)
+                    group.execute(
+                        "INSERT INTO images (imageID, imageExt, groupID, userID, date) VALUES (:imageID, :ending, :groupID, :userID, :date)",
+                        {'imageID': intID, 'ending': extension, 'groupID': groupID, 'userID': session["user_id"],
+                         'date': date})
+                    db.commit()
+                    print("Name of the new Picture:", intID)
+                    time.sleep(1)
+            return redirect("groups")
         # print("groupName, userNames, userAdd:", groupName, userNames, userAdd)
 
         return("its a trap")
 
 #todo: groupcount inbox
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.route('/test', methods = ['GET', 'POST'])
+@login_required
+def test():
+    if request.method == "GET":
+        return render_template("test.html")
+    else:
+        db = sqlite3.connect("facialrec.db")
+        group = db.cursor()
+        files = request.files.getlist('file')
+        groupID = request.form.get("groupID")
+        print("groupID:", groupID)
+        for file in files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                extension = os.path.splitext(filename)[1]
+                group.execute("SELECT COUNT(*) FROM images")
+                lastID = group.fetchall()
+                print("last id: ", lastID[0][0])
+                newID = str(lastID[0][0] + 1)
+                file.save(os.path.join(app.config['UPLOADED_PATH'], filename))  # , filename))
+                os.rename(app.config['UPLOADED_PATH'] + '/' + filename,
+                          app.config['UPLOADED_PATH'] + '/' + newID + extension)
+                intID = int(newID)
+                now = datetime.now()
+                date = now.strftime("%Y/%m/%d %H:%M:%S")
+                print("date:", date)
+                group.execute("INSERT INTO images (imageID, imageExt, groupID, userID, date) VALUES (:imageID, :ending, :groupID, :userID, :date)",
+                              {'imageID': intID, 'ending': extension, 'groupID': groupID, 'userID': session["user_id"], 'date': date})
+                db.commit()
+                print("Name of the new Picture:", intID)
+        return redirect("test")
 
 
 @app.route('/inbox', methods = ['GET', 'POST'])
