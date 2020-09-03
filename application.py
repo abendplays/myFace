@@ -3,18 +3,19 @@ from flask import Flask, flash, jsonify, redirect, render_template, request, ses
     url_for, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
-import os
+import os, re, argparse
 from celery import Celery
 from flask_session import Session
 import random
+
 from flask_dropzone import Dropzone
 from tempfile import mkdtemp
 from datetime import datetime
 import time
 from helpers import apology, login_required
-
 import sqlite3
-#import cs50
+from PIL import Image
+from PIL import ImageFile
 
 userName = ""
 
@@ -61,14 +62,13 @@ def after_request(response):
     return response
 
 
-known_image = face_recognition.load_image_file("/home/deeplearning/Desktop/facialrec/known face/Nik.jpg")
-known_encoding = face_recognition.face_encodings(known_image)[0]
+
 # known Face wird als Referenzbild geladen und encoded
 
 unknown_image = []
 unknown_encoding = []
 results = []
-globalID = 0
+picture_re = re.compile(r'.*\.jpg$', re.IGNORECASE)
 
 inTolerance = 0.6
 # arrays für alle mit den unknown images verwandten Teilen werden aufgesetzt
@@ -89,9 +89,14 @@ def profile():
         if imageID[0][0] == None:
             profilePic = 'noPBset.jpg'
         else:
-            group.execute("SELECT ending FROM profiles WHERE userID = :userID", {'userID': session["user_id"]})
+            group.execute("SELECT profilePic FROM users WHERE userID = :userID", {'userID': session["user_id"]})
+            id = group.fetchall()
+            id = int(id[0][0])
+            group.execute("SELECT ending FROM profiles WHERE userID = :userID AND imageID = :imageID", {'userID': session["user_id"], 'imageID': id})
             ending = group.fetchall()
+            print("ending:", ending)
             profilePic = str(imageID[0][0]) + (ending[0][0])
+            print("profilePid:", profilePic)
         group.execute("SELECT COUNT (*) FROM invites WHERE userID = :userID AND status=0", {'userID': session["user_id"]})
         active = group.fetchall()
         group.execute("SELECT COUNT (*) FROM invites WHERE userID = :userID AND status=1", {'userID': session["user_id"]})
@@ -210,8 +215,6 @@ def groups():
                 runner += 1
             out = ("The group " + groupName + " has been succesfully created!")
             return(out)
-
-
         else:
             try:
                 submitOrig = request.form["groupID"]
@@ -299,7 +302,44 @@ def groups():
                     lastID = group.fetchall()
                     print("last id: ", lastID[0][0])
                     newID = str(lastID[0][0] + 1)
+                    path = os.path.join(app.config['UPLOADED_PATH'], filename)
                     file.save(os.path.join(app.config['UPLOADED_PATH'], filename))  # , filename))
+                    image = Image.open(path)
+                    try:
+                        exif = image._getexif()
+                    except AttributeError as e:
+                        print
+                        "Could not get exif - Bad image!"
+                        return False
+
+                    (width, height) = image.size
+                    # print "\n===Width x Heigh: %s x %s" % (width, height)
+                    if not exif:
+                        if width > height:
+                            image = image.rotate(90)
+                            image.save(path, quality=100)
+                            print("working on it")
+                            return True
+                    else:
+                        orientation_key = 274  # cf ExifTags
+                        if orientation_key in exif:
+                            orientation = exif[orientation_key]
+                            rotate_values = {
+                                3: 180,
+                                6: 270,
+                                8: 90
+                            }
+                            if orientation in rotate_values:
+                                # Rotate and save the picture
+                                image = image.rotate(rotate_values[orientation])
+                                image.save(path, quality=100, exif=str(exif))
+                                print("working on it")
+                                return True
+                        else:
+                            if width > height:
+                                image = image.rotate(90)
+                                image.save(path, quality=100, exif=str(exif))
+                                return True
                     os.rename(app.config['UPLOADED_PATH'] + '/' + filename,
                               app.config['UPLOADED_PATH'] + '/' + newID + extension)
                     intID = int(newID)
@@ -341,17 +381,6 @@ def groups():
                               {'userID': session["user_id"]})
                 db.commit()
                 return redirect("groups")
-        try:
-            bigID = request.form.get("bigJob")
-        except:
-            print("not deleting today.")
-        if bigID:
-            print("bigID:", bigID)
-            globalID = bigID
-            return redirect ("groups")
-            #return render_template("groups.html", progress=progress)
-
-
 
         return("its a trap")
 
@@ -548,29 +577,38 @@ def index():
 
 
 @celery.task(bind=True)
-def long_task(self, globalID=globalID):
-    print("test")
-    print("globalID:", globalID)
-    time.sleep(1)
+def long_task(self, userID, bigID):
+    print("globalID:", bigID)
+    print("userID:", userID)
     groupDB = sqlite3.connect("facialrec.db")
-    print("globalID:", globalID)
     group = groupDB.cursor()
     group.execute("SELECT imageID, imageExt FROM images WHERE groupID = :groupID", {'groupID': bigID})
     images = group.fetchall()
     print("image array:", images)
     totalLen = len(images)
-    print("totalLen:", totalLen)
     runner = 0
     if totalLen == 0:
-        print("höhö")
+        print("An error has occured.") #added button to HTML
         return("sorry. There are no Images in this group yet.")
     else:
+        group.execute("SELECT profilePic FROM users WHERE userID = :userID", {'userID': userID})
+        profilePic = group.fetchall()
+        print("profilePic:", profilePic)
+        group.execute("SELECT imageID, ending FROM profiles WHERE userID = :userID AND imageID = :imageID", {'userID': userID, 'imageID': profilePic[0][0]})
+        known = group.fetchall()
+        kImage = "/home/deeplearning/Desktop/facialrec/static/profile/%s%s" % (known[0][0], known[0][1])
+        print("kImage:", kImage)
+        known_image = face_recognition.load_image_file(kImage)
+        known_encoding = face_recognition.face_encodings(known_image)[0]
+        print("known_encoding:", known_encoding)
+        group.execute("SELECT imageID, imageExt FROM images WHERE userID = :userID AND groupID = :groupID", {'userID': userID, 'groupID': bigID})
+        images = group.fetchall()
         for image in images:  # es wird durch alle bilder geloopt
             n = 0
             check = 0
-        # umgebungsvariablen werden gesetzt
+            # umgebungsvariablen werden gesetzt
             print("unknown Image from DB: ", images[runner][0])
-            filePath = "/home/deeplearning/Desktop/facialrec/unknown face/%s" % (images[runner][0])
+            filePath = "/home/deeplearning/Desktop/facialrec/static/gallery/%s%s" % (images[runner][0], images[runner][1])
             unknown_image = face_recognition.load_image_file(filePath)  # Image wird geladen # images[row] wird es mal werden
             while check == 0:
                 try:
@@ -579,27 +617,31 @@ def long_task(self, globalID=globalID):
                 except:
                     check = 1
             # image wird durch eine try schleife durchgeschleift, bis es eine Fehlermeldung gibt. Dabei werden alle potenzielen Gesicher gecheckt
-            # results = face_recognition.compare_faces([known_encoding], unknown_encoding, inTolerance)
-            print("results:", results)
+            results = face_recognition.compare_faces([known_encoding], unknown_encoding) # , inTolerance in der klammer
+            print("results:", results) # todo: Tolerance from DB.
             currentImage = runner + 1
             self.update_state(state='PROGRESS',
                           meta={'current': currentImage, 'total': totalLen,
                                 'status': 'successfully processed %s' % images[runner][0]})
             runner = runner + 1
-            time.sleep(1)
-        return {'current': currentImage, 'total':totalLen, 'status': 'Task completed!',
+    return {'current': currentImage, 'total':totalLen, 'status': 'Task completed!',
             'result': 'success'}
 
 
 @app.route('/longtask', methods=['POST'])
 def longtask():
-    task = long_task.apply_async()
+    bigID = request.form['bigID']
+    print("bigID:", bigID)
+    userID = session["user_id"]
+    print("userID", userID)
+    task = long_task.apply_async([userID, bigID]) # used to be: task = long_task.apply_async([bigID, userID])
     return jsonify({}), 202, {'Location': url_for('taskstatus',
                                                   task_id=task.id)}
 
 @app.route('/status/<task_id>')
 def taskstatus(task_id):
     task = long_task.AsyncResult(task_id)
+    print("taskiddd:", task)
     if task.state == 'PENDING':
         response = {
             'state': task.state,
