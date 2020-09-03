@@ -60,12 +60,6 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-#groupDB = sqlite3.connect("facialrec.db")
-#group = groupDB.cursor()
-# initializing Databasconnector
-
-
-
 
 known_image = face_recognition.load_image_file("/home/deeplearning/Desktop/facialrec/known face/Nik.jpg")
 known_encoding = face_recognition.face_encodings(known_image)[0]
@@ -74,6 +68,7 @@ known_encoding = face_recognition.face_encodings(known_image)[0]
 unknown_image = []
 unknown_encoding = []
 results = []
+globalID = 0
 
 inTolerance = 0.6
 # arrays für alle mit den unknown images verwandten Teilen werden aufgesetzt
@@ -287,15 +282,15 @@ def groups():
         try:
             files = request.files.getlist('file')
         except:
-            files = ""
-        if files == "":
+            print("..")
+        if files == []:
             print("not uploading any new files.")
         else:
             db = sqlite3.connect("facialrec.db")
             group = db.cursor()
             files = request.files.getlist('file')
             groupID = request.form.get("imageID")
-            print("groupID:", groupID)
+            # print("groupID:", groupID)
             for file in files:
                 if file and allowed_file(file.filename):
                     filename = secure_filename(file.filename)
@@ -313,17 +308,52 @@ def groups():
                     print("date:", date)
                     group.execute(
                         "INSERT INTO images (imageID, imageExt, groupID, userID, date) VALUES (:imageID, :ending, :groupID, :userID, :date)",
-                        {'imageID': intID, 'ending': extension, 'groupID': groupID, 'userID': session["user_id"],
-                         'date': date})
+                        {'imageID': intID, 'ending': extension, 'groupID': groupID, 'userID': session["user_id"], 'date': date})
                     db.commit()
                     print("Name of the new Picture:", intID)
                     time.sleep(1)
             return redirect("groups")
-        # print("groupName, userNames, userAdd:", groupName, userNames, userAdd)
+        try:
+            groupID = request.form.get("delete")
+        except:
+            print("not deleting today.")
+        if groupID:
+            db = sqlite3.connect("facialrec.db")
+            group = db.cursor()
+            group.execute("SELECT COUNT(*) FROM invites WHERE groupID = :groupID AND status=0", {'groupID': groupID})
+            participants = group.fetchall()
+            print("participants: ", participants[0][0])
+            if participants[0][0] == 1:
+                group.execute("DELETE FROM invites WHERE groupID = :groupID", {'groupID': groupID})
+                db.commit()
+                group.execute("UPDATE users SET groupCount = groupCount - 1 WHERE userID = :userID",
+                              {'userID': session["user_id"]})
+                db.commit()
+                group.execute("DELETE FROM groups WHERE groupID = :groupID", {'groupID': groupID})
+                db.commit()
+                group.execute("DELETE FROM images WHERE groupID = :groupID", {'groupID': groupID})
+                db.commit()
+                return redirect("groups")
+            else:
+                group.execute("UPDATE invites SET status = 2 WHERE groupID = :groupID AND userID = :userID", {'groupID': groupID, 'userID': session["user_id"]})
+                db.commit()
+                group.execute("UPDATE users SET groupCount = groupCount - 1 WHERE userID = :userID",
+                              {'userID': session["user_id"]})
+                db.commit()
+                return redirect("groups")
+        try:
+            bigID = request.form.get("bigJob")
+        except:
+            print("not deleting today.")
+        if bigID:
+            print("bigID:", bigID)
+            globalID = bigID
+            return redirect ("groups")
+            #return render_template("groups.html", progress=progress)
+
+
 
         return("its a trap")
-
-#todo: groupcount inbox
 
 
 def allowed_file(filename):
@@ -418,47 +448,6 @@ def inbox():
             db.commit()
             print("success")
         return redirect("inbox")
-
-
-@app.route('/uploader', methods = ['GET', 'POST'])
-@login_required
-def uploader():
-    return("gut so")
-   # if request.method == 'POST':
-   #     file = request.files.getlist("file")
-   #     filename = secure_filename(file.filename)
-   #     groupDB = sqlite3.connect("facialrec.db")
-   #     group = groupDB.cursor()
-   #     group.execute("SELECT COUNT(*) FROM profiles")
-   #     lastID = group.fetchall()
-   #     newID = lastID + 1
-   #     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), newID)
-   #     group.execute("UPDATE users SET profilePic = :profilePic WHERE userID = :userID", {'profilePic': newID, 'userID': session["user_id"]})
-   #     print("Name of the new profile Picture:", newID)
-   #     return 'files uploaded successfully'
-
-   # if request.method == 'POST':
-   #     upload = request.files.getlist("file")
-   #     for file in upload:
-   #         print(upload)
-   #         filename = secure_filename(file.filename)
-   #         groupDB = sqlite3.connect("facialrec.db")
-   #         group = groupDB.cursor()
-   #         group.execute("SELECT * FROM users WHERE profilePic = :profilePic",
-   #                   {'profilePic': filename})
-   #         checkImage = group.fetchall()
-   #         print("found image:", checkImage)
-   #         if checkImage == []:
-   #             group.execute("UPDATE users SET profilePic = :profilePic WHERE userID = :userID", {'profilePic': filename, 'userID': session["user_id"]})
-   #             groupDB.commit()  #fixen bugfix needed
-   #             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-   #             print("file.filename: ", file.filename)
-   #         else:
-   #             print("please rename this image")
-   #     return 'files uploaded successfully'
-   # else:
-   #     return render_template("profile.html")
-
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -559,34 +548,46 @@ def index():
 
 
 @celery.task(bind=True)
-def long_task(self):
-    group.execute("SELECT fileName FROM group1")
-    imagesDB = group.fetchall()
-    totalLen = len(imagesDB)
+def long_task(self, globalID=globalID):
+    print("test")
+    print("globalID:", globalID)
+    time.sleep(1)
+    groupDB = sqlite3.connect("facialrec.db")
+    print("globalID:", globalID)
+    group = groupDB.cursor()
+    group.execute("SELECT imageID, imageExt FROM images WHERE groupID = :groupID", {'groupID': bigID})
+    images = group.fetchall()
+    print("image array:", images)
+    totalLen = len(images)
+    print("totalLen:", totalLen)
     runner = 0
-    for image in imagesDB:  # es wird durch alle bilder geloopt
-        n = 0
-        check = 0
+    if totalLen == 0:
+        print("höhö")
+        return("sorry. There are no Images in this group yet.")
+    else:
+        for image in images:  # es wird durch alle bilder geloopt
+            n = 0
+            check = 0
         # umgebungsvariablen werden gesetzt
-        print("unknown Image from DB: ", imagesDB[runner][0])
-        filePath = "/home/deeplearning/Desktop/facialrec/unknown face/%s" % (imagesDB[runner][0])
-        unknown_image = face_recognition.load_image_file(filePath)  # Image wird geladen # images[row] wird es mal werden
-        while check == 0:
-            try:
-                unknown_encoding = face_recognition.face_encodings(unknown_image)[n]
-                n = n + 1
-            except:
-                check = 1
-        # image wird durch eine try schleife durchgeschleift, bis es eine Fehlermeldung gibt. Dabei werden alle potenzielen Gesicher gecheckt
-        # results = face_recognition.compare_faces([known_encoding], unknown_encoding, inTolerance)
-        print("results:", results)
-        currentImage = runner + 1
-        self.update_state(state='PROGRESS',
+            print("unknown Image from DB: ", images[runner][0])
+            filePath = "/home/deeplearning/Desktop/facialrec/unknown face/%s" % (images[runner][0])
+            unknown_image = face_recognition.load_image_file(filePath)  # Image wird geladen # images[row] wird es mal werden
+            while check == 0:
+                try:
+                    unknown_encoding = face_recognition.face_encodings(unknown_image)[n]
+                    n = n + 1
+                except:
+                    check = 1
+            # image wird durch eine try schleife durchgeschleift, bis es eine Fehlermeldung gibt. Dabei werden alle potenzielen Gesicher gecheckt
+            # results = face_recognition.compare_faces([known_encoding], unknown_encoding, inTolerance)
+            print("results:", results)
+            currentImage = runner + 1
+            self.update_state(state='PROGRESS',
                           meta={'current': currentImage, 'total': totalLen,
-                                'status': 'successfully processed %s' % imagesDB[runner][0]})
-        runner = runner + 1
-        time.sleep(1)
-    return {'current': currentImage, 'total': totalLen, 'status': 'Task completed!',
+                                'status': 'successfully processed %s' % images[runner][0]})
+            runner = runner + 1
+            time.sleep(1)
+        return {'current': currentImage, 'total':totalLen, 'status': 'Task completed!',
             'result': 'success'}
 
 
@@ -635,6 +636,47 @@ def logout():
 
     # Redirect user to login form
     return redirect("/")
+
+
+
+@app.route('/uploader', methods = ['GET', 'POST'])
+@login_required
+def uploader():
+    return("gut so")
+   # if request.method == 'POST':
+   #     file = request.files.getlist("file")
+   #     filename = secure_filename(file.filename)
+   #     groupDB = sqlite3.connect("facialrec.db")
+   #     group = groupDB.cursor()
+   #     group.execute("SELECT COUNT(*) FROM profiles")
+   #     lastID = group.fetchall()
+   #     newID = lastID + 1
+   #     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), newID)
+   #     group.execute("UPDATE users SET profilePic = :profilePic WHERE userID = :userID", {'profilePic': newID, 'userID': session["user_id"]})
+   #     print("Name of the new profile Picture:", newID)
+   #     return 'files uploaded successfully'
+
+   # if request.method == 'POST':
+   #     upload = request.files.getlist("file")
+   #     for file in upload:
+   #         print(upload)
+   #         filename = secure_filename(file.filename)
+   #         groupDB = sqlite3.connect("facialrec.db")
+   #         group = groupDB.cursor()
+   #         group.execute("SELECT * FROM users WHERE profilePic = :profilePic",
+   #                   {'profilePic': filename})
+   #         checkImage = group.fetchall()
+   #         print("found image:", checkImage)
+   #         if checkImage == []:
+   #             group.execute("UPDATE users SET profilePic = :profilePic WHERE userID = :userID", {'profilePic': filename, 'userID': session["user_id"]})
+   #             groupDB.commit()  #fixen bugfix needed
+   #             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+   #             print("file.filename: ", file.filename)
+   #         else:
+   #             print("please rename this image")
+   #     return 'files uploaded successfully'
+   # else:
+   #     return render_template("profile.html")
 
 
 if __name__ == '__main__':
