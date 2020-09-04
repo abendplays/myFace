@@ -630,7 +630,7 @@ def long_task(self, userID, bigID):
             currentImage = runner + 1
             self.update_state(state='PROGRESS',
                           meta={'current': currentImage, 'total': totalLen,
-                                'status': 'successfully processed %s' % images[runner][0]})
+                                'status': 'successfully processed %s images' % images[runner][0]})
             runner = runner + 1
     return {'current': currentImage, 'total':totalLen, 'status': 'Task completed!',
             'result': 'success'}
