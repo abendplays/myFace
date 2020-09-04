@@ -70,7 +70,6 @@ unknown_encoding = []
 results = []
 picture_re = re.compile(r'.*\.jpg$', re.IGNORECASE)
 
-inTolerance = 0.6
 # arrays für alle mit den unknown images verwandten Teilen werden aufgesetzt
 
 
@@ -310,8 +309,7 @@ def groups():
                     except AttributeError as e:
                         print
                         "Could not get exif - Bad image!"
-                        return False
-
+                        exif = None
                     (width, height) = image.size
                     # print "\n===Width x Heigh: %s x %s" % (width, height)
                     if not exif:
@@ -319,7 +317,6 @@ def groups():
                             image = image.rotate(90)
                             image.save(path, quality=100)
                             print("working on it")
-                            return True
                     else:
                         orientation_key = 274  # cf ExifTags
                         if orientation_key in exif:
@@ -332,14 +329,13 @@ def groups():
                             if orientation in rotate_values:
                                 # Rotate and save the picture
                                 image = image.rotate(rotate_values[orientation])
-                                image.save(path, quality=100, exif=str(exif))
+                                image.save(path, quality=100) #, exif=str(exif)
                                 print("working on it")
-                                return True
                         else:
                             if width > height:
                                 image = image.rotate(90)
-                                image.save(path, quality=100, exif=str(exif))
-                                return True
+                                image.save(path, quality=100) #, exif=str(exif)
+
                     os.rename(app.config['UPLOADED_PATH'] + '/' + filename,
                               app.config['UPLOADED_PATH'] + '/' + newID + extension)
                     intID = int(newID)
@@ -578,13 +574,10 @@ def index():
 
 @celery.task(bind=True)
 def long_task(self, userID, bigID):
-    print("globalID:", bigID)
-    print("userID:", userID)
     groupDB = sqlite3.connect("facialrec.db")
     group = groupDB.cursor()
     group.execute("SELECT imageID, imageExt FROM images WHERE groupID = :groupID", {'groupID': bigID})
     images = group.fetchall()
-    print("image array:", images)
     totalLen = len(images)
     runner = 0
     if totalLen == 0:
@@ -593,32 +586,47 @@ def long_task(self, userID, bigID):
     else:
         group.execute("SELECT profilePic FROM users WHERE userID = :userID", {'userID': userID})
         profilePic = group.fetchall()
-        print("profilePic:", profilePic)
         group.execute("SELECT imageID, ending FROM profiles WHERE userID = :userID AND imageID = :imageID", {'userID': userID, 'imageID': profilePic[0][0]})
         known = group.fetchall()
         kImage = "/home/deeplearning/Desktop/facialrec/static/profile/%s%s" % (known[0][0], known[0][1])
-        print("kImage:", kImage)
         known_image = face_recognition.load_image_file(kImage)
         known_encoding = face_recognition.face_encodings(known_image)[0]
-        print("known_encoding:", known_encoding)
         group.execute("SELECT imageID, imageExt FROM images WHERE userID = :userID AND groupID = :groupID", {'userID': userID, 'groupID': bigID})
         images = group.fetchall()
+        group.execute("SELECT tolerance FROM users WHERE userID = :userID", {'userID': userID})
+        tolerance = group.fetchall()
+        tolerance = tolerance[0][0]
         for image in images:  # es wird durch alle bilder geloopt
             n = 0
             check = 0
+            found = False
             # umgebungsvariablen werden gesetzt
-            print("unknown Image from DB: ", images[runner][0])
             filePath = "/home/deeplearning/Desktop/facialrec/static/gallery/%s%s" % (images[runner][0], images[runner][1])
             unknown_image = face_recognition.load_image_file(filePath)  # Image wird geladen # images[row] wird es mal werden
+            unknown_encoding = face_recognition.face_encodings(unknown_image)
+            print("image:", images[runner][0])
             while check == 0:
                 try:
-                    unknown_encoding = face_recognition.face_encodings(unknown_image)[n]
-                    n = n + 1
+                    results = face_recognition.compare_faces([known_encoding], unknown_encoding[n], tolerance=tolerance)
+                    if results[0] == True:
+                        check = 1
+                        found = True
+                    else:
+                        n = n + 1
                 except:
                     check = 1
             # image wird durch eine try schleife durchgeschleift, bis es eine Fehlermeldung gibt. Dabei werden alle potenzielen Gesicher gecheckt
-            results = face_recognition.compare_faces([known_encoding], unknown_encoding) # , inTolerance in der klammer
-            print("results:", results) # todo: Tolerance from DB.
+            if found == True:
+                group.execute("SELECT imageID FROM recognized WHERE userID = :userID and imageID = :imageID", {'userID': userID, 'imageID': images[runner][0]})
+                hasRun = group.fetchall()
+                if hasRun[0][0] == images[runner][0]:
+                    print("already checked this image.")
+                else:
+                    group.execute("INSERT INTO recognized (imageID, imageExt, groupID, userID) VALUES (:imageID, :imageExt, :groupID, :userID)", {'imageID': images[runner][0], 'imageExt': images[runner][1], 'groupID': bigID, 'userID': userID})
+                    groupDB.commit()
+                print("Detected the user in this image.")
+            else:
+                print("Didn't detect this user in this image.")
             currentImage = runner + 1
             self.update_state(state='PROGRESS',
                           meta={'current': currentImage, 'total': totalLen,
