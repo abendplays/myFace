@@ -3,17 +3,46 @@
 <head>
     <title>Register here</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+<style>
+    .form-group{
+      margin-left: auto;
+      margin-right: auto;
+      width: 25%;
+    }
+    .login{
+      margin-left: auto;
+      margin-right: auto;
+      width: 25%;
+    }
+    .center{
+      margin-left: auto;
+      margin-right: auto;
+      width: 25%;
+      display: block;
+    }
+
+</style>
 </head>
-    <form action="/register" method="post">
-        <div class="form-group">
-            <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text">
-        </div>
-        <div class="form-group">
-            <input class="form-control" name="password" placeholder="Password" type="password">
-        </div>
-        <div class="form-group">
-            <input class="form-control" name="conPassword" placeholder="Confirm password" type="password">
-        </div>
-        <button class="btn btn-primary" type="submit">Register</button>
-    </form>
+<body>
+
+<img class="center" src="/static/website/myFace.jpg">
+<form action="/register" method="post">
+  <div class="form-group" >
+    <label for="exampleInputEmail1">Username</label>
+    <input type="text" name="username" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+  </div>
+  <div class="form-group">
+    <label for="exampleInputPassword1">Password</label>
+    <input type="password" name="password" class="form-control" id="exampleInputPassword1">
+  </div>
+    <div class="form-group">
+        <label for="exampleInputPassword1">Confirm Password</label>
+        <input type="password" name="conPassword" class="form-control" id="exampleInputPassword1">
+  </div>
+    <div class="login">
+  <button type="submit" class="btn btn-primary">Register</button>
+    </div>
+</form>
+
+</body>
 </html>

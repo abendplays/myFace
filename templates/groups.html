@@ -100,7 +100,7 @@
 
     <form action="/groups" method="post">
             <div class="form-group">
-                <input class="form-control" style="float: left; width: 50%;" name="userAdd" placeholder="Who do you want to add to the group? Please separate using ','" type="text">
+                <input class="form-control" style="float: left; width: 50%;" name="userAdd" placeholder="Add to group. Please separate using ','" type="text">
                 <button class="btn btn-primary" type="submit" name="groupID" style="margin-left: 1.5%;" value={{ groupName[0][2] }}>Add to this group</button>
         </div>
 </form>
@@ -111,7 +111,7 @@
     <div class="dropdown">
 
   <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    Dropdown button
+    Group settings
   </button>
 
   <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
@@ -168,7 +168,7 @@
             <input autocomplete="off" autofocus class="form-control" name="groupName" placeholder="Groupname" type="text">
         </div>
         <div class="form-group">
-            <input class="form-control" name="userNames" placeholder="Who do you want to add to the group? Please separate using ','" type="text">
+            <input class="form-control" name="userNames" placeholder="Add to group. Please separate using ','" type="text">
         </div>
         <button class="btn btn-primary" name="newGroup" value="origGroup" type="submit">Create Group</button>
 </form>
@@ -189,7 +189,6 @@ $(".custom-file-input").on("change", function() {
             div = $('<div class="${bigID}"><div></div><div>0%</div><div>...</div><div>&nbsp;</div></div><hr>');
 
             $(`#${bigID}`).append(div); <!--$('.${bigID}').append(div);-->
-            alert(bigID);
             // create a progress bar
             var nanobar = new Nanobar({
                 bg: '#44f',

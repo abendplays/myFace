@@ -553,11 +553,25 @@ def index():
     if request.method == 'GET':
         groupDB = sqlite3.connect("facialrec.db")
         group = groupDB.cursor()
-        group.execute("SELECT groupID, groupName FROM invites WHERE userID=:userID AND status=0", {'userID': session['user_id']})
-        groups = group.fetchall()
-        print("groups:", groups)
-        progress = 0
-        return render_template("index.html", progress=progress, groups=groups)
+        white = "white.jpg"
+        group.execute("SELECT DISTINCT groupID FROM images WHERE userID=:userID ORDER BY date desc", {'userID': session['user_id']})
+        groupID=group.fetchall()
+        groupName=[]
+        images=[]
+        for groupss in groupID:
+            group.execute("SELECT groupName FROM groups WHERE groupID=:groupID", {'groupID': groupss[0]})
+            groupNames=group.fetchall()
+            groupName.append(groupNames[0][0])
+            group.execute("SELECT DISTINCT imageID, imageExt FROM images WHERE groupID=:groupID ORDER BY date desc limit 1", {'groupID': groupss[0]})
+            image=group.fetchall()
+            imagePath = "%s%s" % (image[0][0], image[0][1])
+            images.append(imagePath)
+            print("group:", groupss)
+        while len(images) < 3:
+            images.append(white)
+            groupName.append("Please upload more images.")
+        print("groupName:", groupName)
+        return render_template("index.html", groupID=groupID, groupName=groupName, images=images)
     else:
         print("length:", len(imagesDB))
         progress = 0
@@ -619,11 +633,12 @@ def long_task(self, userID, bigID):
             if found == True:
                 group.execute("SELECT imageID FROM recognized WHERE userID = :userID and imageID = :imageID", {'userID': userID, 'imageID': images[runner][0]})
                 hasRun = group.fetchall()
-                if hasRun[0][0] == images[runner][0]:
-                    print("already checked this image.")
-                else:
+                print("hasrun:", hasRun)
+                if hasRun == []:
                     group.execute("INSERT INTO recognized (imageID, imageExt, groupID, userID) VALUES (:imageID, :imageExt, :groupID, :userID)", {'imageID': images[runner][0], 'imageExt': images[runner][1], 'groupID': bigID, 'userID': userID})
                     groupDB.commit()
+                else:
+                    print("already checked this image.")
                 print("Detected the user in this image.")
             else:
                 print("Didn't detect this user in this image.")
