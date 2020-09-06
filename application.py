@@ -1,16 +1,18 @@
 import face_recognition
 from flask import Flask, flash, jsonify, redirect, render_template, request, session, \
-    url_for, jsonify
+    url_for, jsonify, send_file
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os, re, argparse
+from os.path import basename
 from celery import Celery
 from flask_session import Session
-import random
-
+from zipfile import ZipFile
 from flask_dropzone import Dropzone
 from tempfile import mkdtemp
 from datetime import datetime
+from threading import Thread
+import multiprocessing
 import time
 from helpers import apology, login_required
 import sqlite3
@@ -377,7 +379,53 @@ def groups():
                               {'userID': session["user_id"]})
                 db.commit()
                 return redirect("groups")
-
+        else:
+            try:
+                groupID = request.form["downloadAll"]
+            except:
+                print("Doesn't want to add to group")
+            if groupID:
+                db = sqlite3.connect("facialrec.db")
+                group = db.cursor()
+                group.execute("SELECT imageID, imageExt FROM images WHERE groupID=:groupID", {'groupID': groupID})
+                images = group.fetchall()
+                name = "%s.zip" % (groupID)
+                zipObj = ZipFile(name, 'w')
+                for image in images:
+                    filename = str(image[0]) + image[1]
+                    print("filename:", filename)
+                    filePath = os.path.join(app.config['UPLOADED_PATH'], filename)
+                    zipObj.write(filePath, basename(filePath))
+                zipObj.close()
+                zipPath = "/home/deeplearning/Desktop/facialrec/%s.zip" % (groupID)
+                zipName = "%s.zip" % (groupID)
+                print("zipName:", zipName)
+                return send_file(zipPath, attachment_filename=zipName)
+                time.sleep(2)
+                os.remove(filePath)
+        try:
+            groupID = request.form["downloadMy"]
+        except:
+            print("Doesn't want to add to group")
+        if groupID:
+            db = sqlite3.connect("facialrec.db")
+            group = db.cursor()
+            group.execute("SELECT imageID, imageExt FROM recognized WHERE groupID=:groupID AND userID=:userID", {'groupID': groupID, 'userID': session["user_id"]})
+            images = group.fetchall()
+            name = "%s.zip" % (groupID)
+            zipObj = ZipFile(name, 'w')
+            for image in images:
+                filename = str(image[0]) + image[1]
+                print("filename:", filename)
+                filePath = os.path.join(app.config['UPLOADED_PATH'], filename)
+                zipObj.write(filePath, basename(filePath))
+            zipObj.close()
+            zipPath = "/home/deeplearning/Desktop/facialrec/%s.zip" % (groupID)
+            zipName = "%s.zip" % (groupID)
+            print("zipName:", zipName)
+            return send_file(zipPath, attachment_filename=zipName)
+            time.sleep(2)
+            os.remove(filePath)
         return("its a trap")
 
 
@@ -584,15 +632,28 @@ def index():
         print("test:", test)
         return render_template("index.html", groupName = zip(groupName, images, groupIDs, counter), groups = zip(groupName, images, groupIDs, counter))
     else:
-        print("length:", len(imagesDB))
-        progress = 0
-        for image in imagesDB:
-            print("", progress)
-            progress += 1
-        #algorithm()
-        progress = progress
-        print("progresss", progress)
-        return render_template("index.html", progress=progress)
+        groupID = request.form["groupID"]
+        print("nö", groupID)
+        return redirect(url_for('gallery', groupID=groupID))
+
+
+@app.route("/gallery/<groupID>", methods=["GET", "POST"])
+@login_required
+def gallery(groupID):
+    if request.method == 'GET':
+        print("groupID:", groupID)
+        groupDB = sqlite3.connect("facialrec.db")
+        group = groupDB.cursor()
+        group.execute("SELECT imageID, imageExt FROM images WHERE groupID=:groupID", {'groupID': groupID})
+        images=group.fetchall()
+        print("imagesss:", images)
+        toggle=0
+        return render_template("gallery.html", images=images, toggle=toggle, groupID=groupID)
+    else:
+        toggle = request.form.get("toggle")
+        print("toggle:", toggle)
+        return redirect(url_for('gallery', groupID=groupID))
+
 
 #unknown_image ist die Image Datei, in die Geladen wird.
 

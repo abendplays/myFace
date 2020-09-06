@@ -18,11 +18,6 @@
   width: 60%;
 }
 
-.beam {
-  background-color: #007bff;
-  margin-top: -0.15%;
-  height: 100px;
-}
 
 .theGroup {
   width: 50%;
@@ -38,7 +33,7 @@
   width: 60%;
   height: 100%;
   line-height: 1.6;
-  margin-top: 2%;
+  margin-top: 0%;
   margin-left: 1.5%;
 }
 
@@ -57,9 +52,26 @@
 }
 
 .heading {
-  color: white;
-  margin-left: 2%;
-  padding-top: 31px;
+  color: #007bff;
+  margin-left: 8%;
+  padding-top: 40px;
+  margin-bottom: 40;
+}
+
+
+
+.logo {
+  float: left;
+  white-space: nowrap;
+}
+
+.navbar{
+  color: black;
+}
+
+.beam{
+  background-color: white;
+  height: 160px;
 }
 
 .pBar {
@@ -69,20 +81,21 @@
     </style>
 </head>
 <body>
-<nav class="nav nav-pills flex-column flex-sm-row">
-  <a class="flex-sm-fill text-sm-center nav-link" href="/">My ...</a>
+<nav class="nav nav-pills flex-column flex-sm-row" style="text-color: black;">
   <a class="flex-sm-fill text-sm-center nav-link active" href="/groups">My groups</a>
   <a class="flex-sm-fill text-sm-center nav-link" href="inbox">My Inbox</a>
-  <a class="flex-sm-fill text-sm-center nav-link" href="profile">My Profile</a>
+
+       <a href="index" style="white-space: nowrap; margin-right: 3%; margin-left: 3%;" id="/" onclick="document.location=this.id;return false;" >
+        <img src="/static/website/myFace.jpg" width="180" alt="myFace" /> </a>
+
+       <a class="flex-sm-fill text-sm-center nav-link" href="profile">My Profile</a>
   <a class="flex-sm-fill text-sm-center nav-link" href="logout">Logout</a>
-
-
-<!--  <a class="flex-sm-fill text-sm-center nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>-->
-</nav>
+   </nav>
     <div class="beam">
        <div class="heading">
             <h2>Check in with your groups</h2>
        </div>
+        <hr style="margin-top: 3%;">
    </div>
 
 
@@ -95,9 +108,6 @@
     <h4>{{ groupName[0][0]}}</h4>
     Participants: {{ groupName[1] }}.
 </div>
-
-
-
     <form action="/groups" method="post">
             <div class="form-group">
                 <input class="form-control" style="float: left; width: 50%;" name="userAdd" placeholder="Add to group. Please separate using ','" type="text">
@@ -108,22 +118,30 @@
 <div class="pBar">
     <div id="{{groupName[0][2]}}" class={{ groupName[0][2] }}></div>
 </div>
-    <div class="dropdown">
 
+    <div class="dropdown">
   <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
     Group settings
   </button>
-
   <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
 
 <form action="/longtask" method="post">
-    <button type="button" id={{ groupName[0][2] }} class="start-bg-job" onClick="reply_click(this.id)" name="bigJob" value={{ groupName[0][2] }}>Start Long Calculation</button> <!--<button type="button" id="test" class="start-bg-job" name="bigJob" value={{ groupName[0][2] }}>Start Long Calculation</button> -->
+    <button type="button" id={{ groupName[0][2] }} class="start-bg-job btn btn-outline-primary" onClick="reply_click(this.id)" name="bigJob" value={{ groupName[0][2] }}>Start Long Calculation</button> <!--<button type="button" id="test" class="start-bg-job" name="bigJob" value={{ groupName[0][2] }}>Start Long Calculation</button> -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 </form>
 
-      <a class="dropdown-item" href="#">Another action</a>
-    <a class="dropdown-item" href="#">Something else here</a>
+<form action="/groups" method="post">
+    <a href="/groups" target="blank">
+        <button class="btn btn-outline-primary" style="margin-top: 4.5%;" type="submit" name="downloadAll" value={{ groupName[0][2] }}>Download all images</button>
+    </a>
+</form>
+
+<form action="/groups" method="post">
+    <a href="/groups" target="blank">
+        <button class="btn btn-outline-primary" style="margin-top: 4.5%;" type="submit" name="downloadMy" value={{ groupName[0][2] }}>Download my images</button>
+    </a>
+</form>
 
 
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>This is the temp index.</title>
+        <title>My image</title>
             <style>
         .progresss {
             width: 100%;
@@ -12,21 +12,71 @@
           margin-left: 1.5%;
         }
 
-        .heading {
-          color: 007bff;
-          text-align: center;
-          padding-top: 40px;
-          margin-bottom: 40;
-        }
-        .beam{
-          background-color: white;
-          height: 160px;
-        }
-
         .kackusel {
           width: 75%;
           margin-left: 12%;
         }
+                .heading {
+  color: 007bff;
+  margin-left: 8%;
+  padding-top: 40px;
+  margin-bottom: 40;
+}
+
+
+
+.logo {
+  float: left;
+  white-space: nowrap;
+}
+
+.navbar{
+  color: black;
+}
+
+.beam{
+  background-color: white;
+  height: 160px;
+}
+.buttton {
+  display: inline-block;
+  border-radius: 4px;
+  background-color: #007bff;
+  border: none;
+  color: #FFFFFF;
+  text-align: center;
+  font-size: 20px;
+  height: 40px;
+  width: 130px;
+  transition: all 0.5s;
+  cursor: pointer;
+  margin: 5px;
+}
+
+.buttton span {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+
+.buttton span:after {
+  content: '\00bb';
+  position: absolute;
+  opacity: 0;
+  top: 0;
+  right: -20px;
+  transition: 0.5s;
+}
+
+.buttton:hover span {
+  padding-right: 25px;
+}
+
+.buttton:hover span:after {
+  opacity: 1;
+  right: 0;
+}
 
     </style>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
@@ -35,19 +85,21 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
     </head>
     <body>
-    <nav class="nav nav-pills flex-column flex-sm-row">
-  <a class="flex-sm-fill text-sm-center nav-link active" href="/">My ...</a>
+     <nav class="nav nav-pills flex-column flex-sm-row" style="text-color: black;">
   <a class="flex-sm-fill text-sm-center nav-link" href="/groups">My groups</a>
   <a class="flex-sm-fill text-sm-center nav-link" href="inbox">My Inbox</a>
-  <a class="flex-sm-fill text-sm-center nav-link" href="profile">My profile</a>
-  <a class="flex-sm-fill text-sm-center nav-link" href="logout">Logout</a>
 
-</nav>
+       <a href="index" style="white-space: nowrap; margin-right: 3%; margin-left: 3%;" id="/" onclick="document.location=this.id;return false;" >
+        <img src="/static/website/myFace.jpg" width="180" alt="myFace" /> </a>
+
+       <a class="flex-sm-fill text-sm-center nav-link" href="profile">My Profile</a>
+  <a class="flex-sm-fill text-sm-center nav-link" href="logout">Logout</a>
+   </nav>
 <div class="beam">
        <div class="heading">
-            <h2 style="color: #007bff;">Welcome!</h2>
+            <h2 style="color: #007bff;">Hey there!</h2>
        </div>
-       <hr>
+       <hr style="margin-top: 3%;">
    </div>
 
 <div class="kackusel">
@@ -70,8 +122,10 @@
       <div class="carousel-item active">
       <img src=/static/gallery/{{group[1]}} class="d-block w-100" alt={{group[0]}}>
       <div class="carousel-caption d-none d-md-block">
-
-        <h5>{{group[0]}}</h5>
+        <form action="/" method="post" >
+         <button class="buttton" name="groupID" value={{ group[2] }} style="vertical-align:middle"><span>View {{group[0]}}</span>
+         </button>
+             </form>
       </div>
     </div>
       {% else %}
@@ -79,7 +133,10 @@
     <div class="carousel-item">
       <img src=/static/gallery/{{group[1]}} class="d-block w-100" alt={{group[0]}}>
       <div class="carousel-caption d-none d-md-block">
-        <h5>{{group[0]}}</h5>
+        <form action="/" method="post" >
+         <button class="buttton" name="groupID" value={{ group[2] }} style="vertical-align:middle"><span>View {{group[0]}}</span>
+         </button>
+             </form>
       </div>
     </div>
     {% endif %}
@@ -100,7 +157,7 @@
 
 
 
-    <!--<button id="start-bg-job">Start Long Calculation</button>-->
+
     <div id="progresss"></div>
     <script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>

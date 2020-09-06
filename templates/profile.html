@@ -12,10 +12,7 @@
   float: right;
 }
 
-.beam{
-  background-color: white;
-  height: 160px;
-}
+
 
 .text{
   margin-top: 1%;
@@ -25,8 +22,10 @@
   font-size:18px
 }
 
-.testing {
-  margin-top: 39%;
+.profilbild {
+  margin-top: 12%;
+  margin-right: -24%;
+  float: right;
 }
 
 .heading {
@@ -36,11 +35,7 @@
   margin-bottom: 40;
 }
 
-.profilbild {
-  margin-top: 12%;
-  margin-right: -24%;
-  float: right;
-}
+
 
 .logo {
   float: left;
@@ -51,16 +46,21 @@
   color: black;
 }
 
-
+.beam{
+  background-color: white;
+  height: 160px;
+}
 </style>
 </head>
    <body>
    <nav class="nav nav-pills flex-column flex-sm-row" style="text-color: black;">
   <a class="flex-sm-fill text-sm-center nav-link" href="/groups">My groups</a>
   <a class="flex-sm-fill text-sm-center nav-link" href="inbox">My Inbox</a>
-       <a href="index" style="white-space: nowrap" id="/" onclick="document.location=this.id;return false;" >
+
+       <a href="index" style="white-space: nowrap; margin-right: 3%; margin-left: 3%;" id="/" onclick="document.location=this.id;return false;" >
         <img src="/static/website/myFace.jpg" width="180" alt="myFace" /> </a>
-  <a class="flex-sm-fill text-sm-center nav-link active" href="profile">My Profile</a>
+
+       <a class="flex-sm-fill text-sm-center nav-link active" href="profile">My Profile</a>
   <a class="flex-sm-fill text-sm-center nav-link" href="logout">Logout</a>
    </nav>
    <div class="beam">
@@ -81,6 +81,7 @@
     You have {{pending[0][0]}} pending invitations. <br>
 
 </div>
+
    <div class="profilbild">
        <form action = "/profile" method="post" enctype="multipart/form-data" style="margin-top: 3%;">
          <input class="btn btn-primary" type = "file" name = "file"/>
