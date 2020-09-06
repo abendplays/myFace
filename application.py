@@ -558,7 +558,12 @@ def index():
         groupID=group.fetchall()
         groupName=[]
         images=[]
+        groupIDs=[]
+        counter=[]
+        runner = 0
         for groupss in groupID:
+            counter.append(runner)
+            groupIDs.append(groupss[0])
             group.execute("SELECT groupName FROM groups WHERE groupID=:groupID", {'groupID': groupss[0]})
             groupNames=group.fetchall()
             groupName.append(groupNames[0][0])
@@ -567,11 +572,17 @@ def index():
             imagePath = "%s%s" % (image[0][0], image[0][1])
             images.append(imagePath)
             print("group:", groupss)
-        while len(images) < 3:
+            runner +=1
+        if len(images) == 0:
             images.append(white)
+            counter.append(runner)
             groupName.append("Please upload more images.")
+            groupIDs.append("Test")
         print("groupName:", groupName)
-        return render_template("index.html", groupID=groupID, groupName=groupName, images=images)
+        print("images:", images)
+        test= zip(groupName, images, groupIDs)
+        print("test:", test)
+        return render_template("index.html", groupName = zip(groupName, images, groupIDs, counter), groups = zip(groupName, images, groupIDs, counter))
     else:
         print("length:", len(imagesDB))
         progress = 0
