@@ -433,39 +433,6 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route('/test', methods = ['GET', 'POST'])
-@login_required
-def test():
-    if request.method == "GET":
-        return render_template("test.html")
-    else:
-        db = sqlite3.connect("facialrec.db")
-        group = db.cursor()
-        files = request.files.getlist('file')
-        groupID = request.form.get("groupID")
-        print("groupID:", groupID)
-        for file in files:
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                extension = os.path.splitext(filename)[1]
-                group.execute("SELECT COUNT(*) FROM images")
-                lastID = group.fetchall()
-                print("last id: ", lastID[0][0])
-                newID = str(lastID[0][0] + 1)
-                file.save(os.path.join(app.config['UPLOADED_PATH'], filename))  # , filename))
-                os.rename(app.config['UPLOADED_PATH'] + '/' + filename,
-                          app.config['UPLOADED_PATH'] + '/' + newID + extension)
-                intID = int(newID)
-                now = datetime.now()
-                date = now.strftime("%Y/%m/%d %H:%M:%S")
-                print("date:", date)
-                group.execute("INSERT INTO images (imageID, imageExt, groupID, userID, date) VALUES (:imageID, :ending, :groupID, :userID, :date)",
-                              {'imageID': intID, 'ending': extension, 'groupID': groupID, 'userID': session["user_id"], 'date': date})
-                db.commit()
-                print("Name of the new Picture:", intID)
-        return redirect("test")
-
-
 @app.route('/inbox', methods = ['GET', 'POST'])
 @login_required
 def inbox():
@@ -642,17 +609,47 @@ def index():
 def gallery(groupID):
     if request.method == 'GET':
         print("groupID:", groupID)
+        groupID.replace("<", " ")
+        groupID.replace(">", " ")
+        print("groupID:", groupID)
         groupDB = sqlite3.connect("facialrec.db")
         group = groupDB.cursor()
         group.execute("SELECT imageID, imageExt FROM images WHERE groupID=:groupID", {'groupID': groupID})
         images=group.fetchall()
         print("imagesss:", images)
-        toggle=0
+        toggle=1
         return render_template("gallery.html", images=images, toggle=toggle, groupID=groupID)
     else:
         toggle = request.form.get("toggle")
-        print("toggle:", toggle)
-        return redirect(url_for('gallery', groupID=groupID))
+        if toggle == 0:
+            print("groupID:", groupID)
+            group = groupID
+            group = group[:-1]
+            group = group[1:]
+            groupIDs = int(group)
+            print("groupID2:", group)
+            groupDB = sqlite3.connect("facialrec.db")
+            group = groupDB.cursor()
+            group.execute("SELECT imageID, imageExt FROM images WHERE groupID=:groupID", {'groupID': groupIDs})
+            images = group.fetchall()
+            print("image:", images)
+            toggle = 1
+            return render_template('gallery.html', images=images, toggle=toggle, groupID=groupIDs)
+        else:
+            print("groupID:", groupID)
+            group=groupID
+            group = group[:-1]
+            group = group[1:]
+            print("groupID3:", group)
+            groupIDs = int(group)
+            print("toggle:", toggle)
+            groupDB = sqlite3.connect("facialrec.db")
+            group = groupDB.cursor()
+            group.execute("SELECT imageID, imageExt FROM recognized WHERE groupID=:groupID AND userID=:userID", {'groupID': groupIDs, 'userID': session["user_id"]})
+            images = group.fetchall()
+            print("imagesss:", images)
+            toggle = 0
+        return render_template('gallery.html', images=images, toggle=toggle, groupID=groupIDs)
 
 
 #unknown_image ist die Image Datei, in die Geladen wird.
