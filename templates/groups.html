@@ -100,8 +100,14 @@
 
 
 <div class="left">
+{% if userPic == 0 %}
     <h2>Your groups</h2>
-
+{% else %}
+    <h2></h2>
+    <script>
+        alert("Please set a profile picture first!");
+    </script>
+{% endif %}
 
 {% for groupName in groupNames %}
 <div class="theGroup">

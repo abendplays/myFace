@@ -51,11 +51,23 @@ div.desc {
 }
 </style>
 
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 
 </head>
 
 
 <body>
+
+<nav class="nav nav-pills flex-column flex-sm-row" style="text-color: black;">
+  <a class="flex-sm-fill text-sm-center nav-link" href="/groups">My groups</a>
+  <a class="flex-sm-fill text-sm-center nav-link" href="inbox">My Inbox</a>
+
+       <a href="index" style="white-space: nowrap; margin-right: 3%; margin-left: 3%;" id="/" onclick="document.location=this.id;return false;" >
+        <img src="/static/website/myFace.jpg" width="180" alt="myFace" /> </a>
+
+       <a class="flex-sm-fill text-sm-center nav-link" href="profile">My Profile</a>
+  <a class="flex-sm-fill text-sm-center nav-link" href="logout">Logout</a>
+   </nav>
 
 <form action="/gallery/<{{groupID}}>" method="post">
     {% if toggle == 0 %}

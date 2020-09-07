@@ -140,6 +140,8 @@ def groups():
         groupNames = inbox.fetchall()
         runner = 0
         test = []
+        inbox.execute("SELECT profilePic FROM users WHERE userID=:userID", {'userID': session["user_id"]})
+        profile = inbox.fetchall()
         for groupName in groupNames:
             inbox.execute("SELECT userName FROM invites WHERE groupID = :groupID AND status = 0",
                           {'groupID': groupNames[runner][2]})
@@ -156,10 +158,14 @@ def groups():
                     participants = participants + ", " + users[0]
                     laeufer += 1
             test.append(participants)
-            # test.append(participants)
             runner += 1
-            # print("groupNames:", groupNames)
-        return render_template('groups.html', groupNames=zip(groupNames, test))
+        print("profile:", profile)
+        if profile[0][0] == None:
+            userPic = 1
+        else:
+            userPic = 0
+        print("groups:", userPic)
+        return render_template('groups.html', groupNames=zip(groupNames, test), userPic=userPic)
     else:
         try:
             submitOrig = request.form["userNames"]
@@ -400,9 +406,8 @@ def groups():
                 zipPath = "/home/deeplearning/Desktop/facialrec/%s.zip" % (groupID)
                 zipName = "%s.zip" % (groupID)
                 print("zipName:", zipName)
+                cleanup.delay(zipPath)
                 return send_file(zipPath, attachment_filename=zipName)
-                time.sleep(2)
-                os.remove(filePath)
         try:
             groupID = request.form["downloadMy"]
         except:
@@ -423,10 +428,17 @@ def groups():
             zipPath = "/home/deeplearning/Desktop/facialrec/%s.zip" % (groupID)
             zipName = "%s.zip" % (groupID)
             print("zipName:", zipName)
+            cleanup.delay(zipPath)
             return send_file(zipPath, attachment_filename=zipName)
-            time.sleep(2)
-            os.remove(filePath)
         return("its a trap")
+
+
+@celery.task
+def cleanup(zipPath):
+    time.sleep(4)
+    os.remove(zipPath)
+    print("removed")
+
 
 
 def allowed_file(filename):
@@ -591,7 +603,7 @@ def index():
         if len(images) == 0:
             images.append(white)
             counter.append(runner)
-            groupName.append("Please upload more images.")
+            groupName.append("No images")
             groupIDs.append("Test")
         print("groupName:", groupName)
         print("images:", images)
@@ -621,34 +633,38 @@ def gallery(groupID):
         return render_template("gallery.html", images=images, toggle=toggle, groupID=groupID)
     else:
         toggle = request.form.get("toggle")
-        if toggle == 0:
+        print("toggle2222:", toggle)
+        if toggle == '0':
             print("groupID:", groupID)
             group = groupID
             group = group[:-1]
             group = group[1:]
             groupIDs = int(group)
-            print("groupID2:", group)
+            print("groupID2:", groupIDs)
             groupDB = sqlite3.connect("facialrec.db")
             group = groupDB.cursor()
             group.execute("SELECT imageID, imageExt FROM images WHERE groupID=:groupID", {'groupID': groupIDs})
             images = group.fetchall()
             print("image:", images)
-            toggle = 1
+            toggle=1
+            print("toggleee:", toggle)
             return render_template('gallery.html', images=images, toggle=toggle, groupID=groupIDs)
         else:
             print("groupID:", groupID)
             group=groupID
             group = group[:-1]
             group = group[1:]
-            print("groupID3:", group)
-            groupIDs = int(group)
-            print("toggle:", toggle)
+            try:
+                groupIDs = int(group)
+            except:
+                print("nothing")
+            groupIDs = 55555
             groupDB = sqlite3.connect("facialrec.db")
             group = groupDB.cursor()
             group.execute("SELECT imageID, imageExt FROM recognized WHERE groupID=:groupID AND userID=:userID", {'groupID': groupIDs, 'userID': session["user_id"]})
             images = group.fetchall()
             print("imagesss:", images)
-            toggle = 0
+            toggle=0
         return render_template('gallery.html', images=images, toggle=toggle, groupID=groupIDs)
 
 
@@ -777,40 +793,6 @@ def logout():
 @login_required
 def uploader():
     return("gut so")
-   # if request.method == 'POST':
-   #     file = request.files.getlist("file")
-   #     filename = secure_filename(file.filename)
-   #     groupDB = sqlite3.connect("facialrec.db")
-   #     group = groupDB.cursor()
-   #     group.execute("SELECT COUNT(*) FROM profiles")
-   #     lastID = group.fetchall()
-   #     newID = lastID + 1
-   #     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), newID)
-   #     group.execute("UPDATE users SET profilePic = :profilePic WHERE userID = :userID", {'profilePic': newID, 'userID': session["user_id"]})
-   #     print("Name of the new profile Picture:", newID)
-   #     return 'files uploaded successfully'
-
-   # if request.method == 'POST':
-   #     upload = request.files.getlist("file")
-   #     for file in upload:
-   #         print(upload)
-   #         filename = secure_filename(file.filename)
-   #         groupDB = sqlite3.connect("facialrec.db")
-   #         group = groupDB.cursor()
-   #         group.execute("SELECT * FROM users WHERE profilePic = :profilePic",
-   #                   {'profilePic': filename})
-   #         checkImage = group.fetchall()
-   #         print("found image:", checkImage)
-   #         if checkImage == []:
-   #             group.execute("UPDATE users SET profilePic = :profilePic WHERE userID = :userID", {'profilePic': filename, 'userID': session["user_id"]})
-   #             groupDB.commit()  #fixen bugfix needed
-   #             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-   #             print("file.filename: ", file.filename)
-   #         else:
-   #             print("please rename this image")
-   #     return 'files uploaded successfully'
-   # else:
-   #     return render_template("profile.html")
 
 
 if __name__ == '__main__':
