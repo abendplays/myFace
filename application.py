@@ -436,10 +436,9 @@ def groups():
 
 @celery.task
 def cleanup(zipPath):
-    time.sleep(4)
+    time.sleep(2)
     os.remove(zipPath)
     print("removed")
-
 
 
 def allowed_file(filename):
@@ -660,7 +659,7 @@ def gallery(groupID):
                 groupIDs = int(group)
             except:
                 print("nothing")
-            groupIDs = 55555
+            groupIDs = int(group)
             groupDB = sqlite3.connect("facialrec.db")
             group = groupDB.cursor()
             group.execute("SELECT imageID, imageExt FROM recognized WHERE groupID=:groupID AND userID=:userID", {'groupID': groupIDs, 'userID': session["user_id"]})
