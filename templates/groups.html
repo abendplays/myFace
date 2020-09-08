@@ -28,24 +28,6 @@
   display: inline;
 }
 
-.left {
-  float: left;
-  width: 60%;
-  height: 100%;
-  line-height: 1.6;
-  margin-top: 0%;
-  margin-left: 1.5%;
-}
-
-.right {
-  float: right;
-  width: 35%;
-  height: 100%;
-  margin-right: 1%;
-  margin-top: 2%;
-
-}
-
 .progresss {
   width: 100%;
   text-align: center;
@@ -81,7 +63,7 @@
     </style>
 </head>
 <body>
-<nav class="nav nav-pills flex-column flex-sm-row" style="text-color: black;">
+<nav class="nav nav-pills flex-column flex-sm-row" style="margin-left: 0.5%; margin-right: 0.5%; margin-top: 1%; text-color: black;">
   <a class="flex-sm-fill text-sm-center nav-link active" href="/groups">My groups</a>
   <a class="flex-sm-fill text-sm-center nav-link" href="inbox">My Inbox</a>
 
@@ -102,11 +84,41 @@
 <div class="left">
 {% if userPic == 0 %}
     <h2>Your groups</h2>
+    <style>
+.right {
+  float: right;
+  width: 35%;
+  height: 100%;
+  margin-right: 1%;
+  margin-top: 0.5%;
+
+}
+
+.left {
+  float: left;
+  width: 60%;
+  height: 100%;
+  line-height: 1.6;
+  margin-top: 0%;
+  margin-left: 1.5%;
+}
+    </style>
 {% else %}
     <h2></h2>
     <script>
         alert("Please set a profile picture first!");
     </script>
+    <style>
+.right {
+  float: left;
+  width: 35%;
+  height: 100%;
+  margin-right: 1%;
+  margin-left: 1.5%;
+  margin-top: 2%;
+
+}
+    </style>
 {% endif %}
 
 {% for groupName in groupNames %}
@@ -186,7 +198,7 @@
 
 
 <div class="right">
-    <h2>Create a new Group</h2>
+    <h2 style="margin-bottom: 3%; ">Create a new Group</h2>
 <form action="/groups" method="post" >
         <div class="form-group">
             <input autocomplete="off" autofocus class="form-control" name="groupName" placeholder="Groupname" type="text">

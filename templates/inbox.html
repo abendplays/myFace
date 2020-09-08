@@ -1,6 +1,9 @@
 <html>
 <head>
    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+   <title>
+       My Inbox
+   </title>
     <style>
         .push{
           margin-top: 1%;
@@ -34,7 +37,7 @@
     </style>
 </head>
    <body>
-   <nav class="nav nav-pills flex-column flex-sm-row" style="text-color: black;">
+   <nav class="nav nav-pills flex-column flex-sm-row" style="margin-left: 0.5%; margin-right: 0.5%; margin-top: 1%; text-color: black;">
   <a class="flex-sm-fill text-sm-center nav-link" href="/groups">My groups</a>
   <a class="flex-sm-fill text-sm-center nav-link active" href="inbox">My Inbox</a>
 
@@ -50,6 +53,13 @@
        </div>
        <hr>
    </div>
+   {% if noInvites == 0 %}
+   <script>
+       alert('No invites currently pending.');
+   </script>
+   {% endif %}
+
+
    <p id="test"></p>
     {% for groupName in groupNames %}
     <div class="text">

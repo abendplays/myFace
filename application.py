@@ -142,6 +142,7 @@ def groups():
         test = []
         inbox.execute("SELECT profilePic FROM users WHERE userID=:userID", {'userID': session["user_id"]})
         profile = inbox.fetchall()
+        print("groupNames:", groupNames)
         for groupName in groupNames:
             inbox.execute("SELECT userName FROM invites WHERE groupID = :groupID AND status = 0",
                           {'groupID': groupNames[runner][2]})
@@ -160,7 +161,7 @@ def groups():
             test.append(participants)
             runner += 1
         print("profile:", profile)
-        if profile[0][0] == None:
+        if groupNames == []:
             userPic = 1
         else:
             userPic = 0
@@ -459,8 +460,6 @@ def inbox():
             inbox.execute("SELECT userName FROM invites WHERE groupID = :groupID AND status = 0",
                           {'groupID': groupNames[runner][2]})
             users = inbox.fetchall()
-            #print("", users)
-            #print("grouping:", groupNames[runner][2])
             laeufer = 0
             participants = ""
             for users in users:
@@ -471,9 +470,12 @@ def inbox():
                     participants = participants + ", " + users[0]
                     laeufer += 1
             test.append(participants)
-            #test.append(participants)
             runner += 1
-        return render_template('inbox.html', groupNames=zip(groupNames, test))
+        if groupNames == []:
+            noInvites = 0
+        else:
+            noInvites = 1
+        return render_template('inbox.html', groupNames=zip(groupNames, test), noInvites=noInvites)
     elif request.method == "POST":
         returnvalue = request.form.get("groupID")
         length = len(returnvalue)
