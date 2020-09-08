@@ -161,8 +161,6 @@
     </a>
 </form>
 
-
-
       <form action="/groups" enctype="multipart/form-data" method="post">
         <div class="custom-file mb-3" style="float: left; margin-top: 0%; width: 70%;">
             <input type="file" class="custom-file-input" id="file" multiple="true" name="file">
@@ -172,8 +170,6 @@
             <button type="submit" style="float: left; margin-left: 2%; margin-top: 0%;" class="btn btn-primary" name="imageID" value={{ groupName[0][2] }}>Upload</button>
         </div>
      </form>
-
-
 
     <form action="/groups" method="post">
       <button type="submit" class="btn btn-outline-danger" name="delete" value={{ groupName[0][2] }}>Quit this group</button>
@@ -189,25 +185,17 @@
     {% endfor %}
     </div>
 
-
-
-
-
-
-
-
-
 <div class="right">
     <h2 style="margin-bottom: 3%; ">Create a new Group</h2>
-<form action="/groups" method="post" >
-        <div class="form-group">
-            <input autocomplete="off" autofocus class="form-control" name="groupName" placeholder="Groupname" type="text">
-        </div>
-        <div class="form-group">
-            <input class="form-control" name="userNames" placeholder="Add to group. Please separate using ','" type="text">
-        </div>
+        <form action="/groups" method="post" >
+            <div class="form-group">
+                <input autocomplete="off" autofocus class="form-control" name="groupName" placeholder="Groupname" type="text">
+            </div>
+            <div class="form-group">
+                <input class="form-control" name="userNames" placeholder="Add to group. Please separate using ','" type="text">
+            </div>
         <button class="btn btn-primary" name="newGroup" value="origGroup" type="submit">Create Group</button>
-</form>
+        </form>
 </div>
 
 <script>
@@ -282,7 +270,5 @@ $(".custom-file-input").on("change", function() {
             $('.start-bg-job').click(start_long_task);
         });
 </script>
-
-
 </body>
 </html>
