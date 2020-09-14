@@ -94,7 +94,7 @@
 
 <body>
     <nav class="nav nav-pills flex-column flex-sm-row" style="margin-left: 0.5%; margin-right: 0.5%;margin-top: 1%; text-color: black;">
-        <a class="flex-sm-fill text-sm-center nav-link" href="/groups">My groups</a>
+        <a class="flex-sm-fill text-sm-center nav-link" href="/groups">My Groups</a>
         <a class="flex-sm-fill text-sm-center nav-link" href="inbox">My Inbox</a>
         <a href="index" style="white-space: nowrap; margin-right: 3%; margin-left: 3%;" id="/" onclick="document.location=this.id;return false;" >
             <img src="/static/website/myFace.jpg" width="180" alt="myFace" /> </a>
@@ -137,7 +137,7 @@
                             <img src=/static/gallery/{{group[1]}} class="d-block w-100" alt={{group[0]}}>
                                 <div class="carousel-caption d-none d-md-block">
                                     <form action="/" method="post" >
-                                        <button class="buttton" name="groupID" value={{ group[2] }} style="vertical-align:middle"><span>View {{group[0]}}</span>
+                                        <button class="buttton" name="groupID" value={{ group[2] }} style="vertical-align:middle"><span>{{group[0]}}</span>
                                         </button>
                                     </form>
                                 </div>
@@ -147,7 +147,7 @@
                             <img src=/static/gallery/{{group[1]}} class="d-block w-100" alt={{group[0]}}>
                                 <div class="carousel-caption d-none d-md-block">
                                     <form action="/" method="post" >
-                                        <button class="buttton" name="groupID" value={{ group[2] }} style="vertical-align:middle"><span>View {{group[0]}}</span>
+                                        <button class="buttton" name="groupID" value={{ group[2] }} style="vertical-align:middle"><span>{{group[0]}}</span>
                                         </button>
                                     </form>
                                 </div>

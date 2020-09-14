@@ -11,13 +11,10 @@ from zipfile import ZipFile
 from flask_dropzone import Dropzone
 from tempfile import mkdtemp
 from datetime import datetime
-from threading import Thread
-import multiprocessing
 import time
 from helpers import apology, login_required
 import sqlite3
-from PIL import Image
-from PIL import ImageFile
+
 
 userName = ""
 
@@ -70,7 +67,7 @@ def after_request(response):
 unknown_image = []
 unknown_encoding = []
 results = []
-picture_re = re.compile(r'.*\.jpg$', re.IGNORECASE)
+# picture_re = re.compile(r'.*\.jpg$', re.IGNORECASE)
 
 # arrays für alle mit den unknown images verwandten Teilen werden aufgesetzt
 
@@ -162,11 +159,15 @@ def groups():
             runner += 1
         print("profile:", profile)
         if groupNames == []:
+            groupExists = 1
+        else:
+            groupExists = 0
+        if profile[0][0] == None:
             userPic = 1
         else:
             userPic = 0
         print("groups:", userPic)
-        return render_template('groups.html', groupNames=zip(groupNames, test), userPic=userPic)
+        return render_template('groups.html', groupNames=zip(groupNames, test), userPic=userPic, groupExists=groupExists)
     else:
         try:
             submitOrig = request.form["userNames"]
@@ -312,39 +313,6 @@ def groups():
                     newID = str(lastID[0][0] + 1)
                     path = os.path.join(app.config['UPLOADED_PATH'], filename)
                     file.save(os.path.join(app.config['UPLOADED_PATH'], filename))  # , filename))
-                    image = Image.open(path)
-                    try:
-                        exif = image._getexif()
-                    except AttributeError as e:
-                        print
-                        "Could not get exif - Bad image!"
-                        exif = None
-                    (width, height) = image.size
-                    # print "\n===Width x Heigh: %s x %s" % (width, height)
-                    if not exif:
-                        if width > height:
-                            image = image.rotate(90)
-                            image.save(path, quality=100)
-                            print("working on it")
-                    else:
-                        orientation_key = 274  # cf ExifTags
-                        if orientation_key in exif:
-                            orientation = exif[orientation_key]
-                            rotate_values = {
-                                3: 180,
-                                6: 270,
-                                8: 90
-                            }
-                            if orientation in rotate_values:
-                                # Rotate and save the picture
-                                image = image.rotate(rotate_values[orientation])
-                                image.save(path, quality=100) #, exif=str(exif)
-                                print("working on it")
-                        else:
-                            if width > height:
-                                image = image.rotate(90)
-                                image.save(path, quality=100) #, exif=str(exif)
-
                     os.rename(app.config['UPLOADED_PATH'] + '/' + filename,
                               app.config['UPLOADED_PATH'] + '/' + newID + extension)
                     intID = int(newID)
@@ -431,6 +399,11 @@ def groups():
             print("zipName:", zipName)
             cleanup.delay(zipPath)
             return send_file(zipPath, attachment_filename=zipName)
+        try:
+            groupIDD = request.form["groupIDD"]
+            return redirect(url_for('gallery', groupID=groupIDD))
+        except:
+            print("nichts")
         return("its a trap")
 
 
@@ -582,8 +555,17 @@ def index():
         groupDB = sqlite3.connect("facialrec.db")
         group = groupDB.cursor()
         white = "white.jpg"
-        group.execute("SELECT DISTINCT groupID FROM images WHERE userID=:userID ORDER BY date desc", {'userID': session['user_id']})
-        groupID=group.fetchall()
+        group.execute("SELECT groupID FROM invites WHERE userID=:userID AND status=0", {'userID': session["user_id"]})
+        idS = group.fetchall()
+        IDS = []
+        runner = 0
+        for id in idS:
+            IDS.append(idS[runner][0])
+            runner += 1
+        print("IDS:", IDS)
+        sql="SELECT DISTINCT groupID FROM images WHERE groupID in ({seq}) ORDER BY date desc".format(seq=','.join(['?']*len(IDS)))
+        groupID = group.execute(sql, IDS)
+        print("groups activity:", groupID)
         groupName=[]
         images=[]
         groupIDs=[]
@@ -678,8 +660,10 @@ def long_task(self, userID, bigID):
     group = groupDB.cursor()
     group.execute("SELECT imageID, imageExt FROM images WHERE groupID = :groupID", {'groupID': bigID})
     images = group.fetchall()
+    print("images:", images)
     totalLen = len(images)
     runner = 0
+    currentImage = 0
     if totalLen == 0:
         print("An error has occured.") #added button to HTML
         return("sorry. There are no Images in this group yet.")
@@ -688,16 +672,18 @@ def long_task(self, userID, bigID):
         profilePic = group.fetchall()
         group.execute("SELECT imageID, ending FROM profiles WHERE userID = :userID AND imageID = :imageID", {'userID': userID, 'imageID': profilePic[0][0]})
         known = group.fetchall()
+        print("known:", known)
         kImage = "/home/deeplearning/Desktop/facialrec/static/profile/%s%s" % (known[0][0], known[0][1])
         known_image = face_recognition.load_image_file(kImage)
         known_encoding = face_recognition.face_encodings(known_image)[0]
-        group.execute("SELECT imageID, imageExt FROM images WHERE userID = :userID AND groupID = :groupID", {'userID': userID, 'groupID': bigID})
+        group.execute("SELECT imageID, imageExt FROM images WHERE groupID = :groupID", {'groupID': bigID})
         images = group.fetchall()
         group.execute("SELECT tolerance FROM users WHERE userID = :userID", {'userID': userID})
         tolerance = group.fetchall()
         tolerance = tolerance[0][0]
         for image in images:  # es wird durch alle bilder geloopt
             n = 0
+            print("current Image:", image)
             check = 0
             found = False
             # umgebungsvariablen werden gesetzt

@@ -64,7 +64,7 @@
 </head>
 <body>
 <nav class="nav nav-pills flex-column flex-sm-row" style="margin-left: 0.5%; margin-right: 0.5%; margin-top: 1%; text-color: black;">
-  <a class="flex-sm-fill text-sm-center nav-link active" href="/groups">My groups</a>
+  <a class="flex-sm-fill text-sm-center nav-link active" href="/groups">My Groups</a>
   <a class="flex-sm-fill text-sm-center nav-link" href="inbox">My Inbox</a>
 
        <a href="index" style="white-space: nowrap; margin-right: 3%; margin-left: 3%;" id="/" onclick="document.location=this.id;return false;" >
@@ -82,7 +82,7 @@
 
 
 <div class="left">
-{% if userPic == 0 %}
+{% if groupExists == 0 %}
     <h2>Your groups</h2>
     <style>
 .right {
@@ -105,13 +105,15 @@
     </style>
 {% else %}
     <h2></h2>
+    {% if userPic == 1 %}
     <script>
         alert("Please set a profile picture first!");
     </script>
+    {% endif %}
     <style>
 .right {
   float: left;
-  width: 35%;
+  width: 50%;
   height: 100%;
   margin-right: 1%;
   margin-left: 1.5%;
@@ -123,7 +125,12 @@
 
 {% for groupName in groupNames %}
 <div class="theGroup">
-    <h4>{{ groupName[0][0]}}</h4>
+    <h4>
+    <form action="/groups" method="post" >
+        <button class="btn btn-outline-primary" name="groupIDD" value={{ groupName[0][2] }} style=""><span>{{ groupName[0][0]}}</span>
+        </button>
+    </form>
+    </h4>
     Participants: {{ groupName[1] }}.
 </div>
     <form action="/groups" method="post">
@@ -144,7 +151,7 @@
   <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
 
 <form action="/longtask" method="post">
-    <button type="button" id={{ groupName[0][2] }} class="start-bg-job btn btn-outline-primary" onClick="reply_click(this.id)" name="bigJob" value={{ groupName[0][2] }}>Start Long Calculation</button> <!--<button type="button" id="test" class="start-bg-job" name="bigJob" value={{ groupName[0][2] }}>Start Long Calculation</button> -->
+    <button type="button" id={{ groupName[0][2] }} class="start-bg-job btn btn-outline-primary" onClick="reply_click(this.id)" name="bigJob" value={{ groupName[0][2] }}>Find myFace</button> <!--<button type="button" id="test" class="start-bg-job" name="bigJob" value={{ groupName[0][2] }}>Start Long Calculation</button> -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 </form>
